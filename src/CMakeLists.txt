@@ -1,6 +1,7 @@
 rock_library(modbus
-    SOURCES Dummy.cpp
-    HEADERS Dummy.hpp)
+    SOURCES RTU.cpp
+    HEADERS RTU.hpp
+    DEPS_PKGCONFIG base-types)
 
 rock_executable(modbus_bin Main.cpp
     DEPS modbus)
