@@ -38,6 +38,11 @@ namespace modbus {
          */
         base::Time interframeDuration(int bitrate);
 
+        /** @overload
+         */
+        uint8_t* formatFrame(uint8_t* buffer, int address, int functionID,
+                             std::vector<uint8_t> const& payload);
+
         /** Fill a byte buffer with a valid RTU frame (incl. CRC)
          */
         uint8_t* formatFrame(uint8_t* buffer, int address, int functionID,

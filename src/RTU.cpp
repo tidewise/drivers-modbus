@@ -13,6 +13,12 @@ base::Time RTU::interframeDuration(int bitrate) {
 }
 
 uint8_t* RTU::formatFrame(uint8_t* buffer, int address, int functionID,
+                     std::vector<uint8_t> const& payload) {
+
+    return RTU::formatFrame(buffer, address, functionID,
+                            &(*payload.begin()), &(*payload.end()));
+}
+uint8_t* RTU::formatFrame(uint8_t* buffer, int address, int functionID,
                           uint8_t const* payloadStart, uint8_t const* payloadEnd) {
 
     int payloadSize = payloadEnd - payloadStart;
