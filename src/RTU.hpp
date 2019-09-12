@@ -35,7 +35,8 @@ namespace modbus {
 
         enum Functions {
             FUNCTION_READ_HOLDING_REGISTERS = 0x03,
-            FUNCTION_READ_INPUT_REGISTERS = 0x04
+            FUNCTION_READ_INPUT_REGISTERS = 0x04,
+            FUNCTION_WRITE_SINGLE_REGISTER = 0x06
         };
 
         /** Computes the interframe duration specified by the Modbus-on-serial
@@ -103,6 +104,15 @@ namespace modbus {
         /** Parse a read registers reply */
         void parseReadRegisters(
             uint16_t* values, Frame const& frame, int length
+        );
+
+        /** Fill a byte buffer with a request to write a single register
+         *
+         * @arg the register
+         * @arg the register value
+         */
+        uint8_t* formatWriteRegister(
+            uint8_t* buffer, uint8_t address, uint16_t register_id, uint16_t value
         );
     }
 }

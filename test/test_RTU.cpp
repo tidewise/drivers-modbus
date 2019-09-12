@@ -158,3 +158,13 @@ TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_would_take_few
     ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2),
                  UnexpectedReply);
 }
+
+TEST_F(RTUTest, it_formats_a_single_register_write) {
+    uint8_t buffer[8];
+    uint8_t* end = RTU::formatWriteRegister(buffer, 0x10, 0x1020, 0x1121);
+    ASSERT_EQ(end - buffer, 8);
+
+    uint8_t expected[] = { 0x10, 0x06, 0x10, 0x20, 0x11, 0x21 };
+    ASSERT_THAT(std::vector<uint8_t>(buffer, end - 2),
+                ElementsAreArray(expected));
+}

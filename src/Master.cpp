@@ -47,6 +47,12 @@ Frame const& Master::request(int address, int function, vector<uint8_t> const& p
     return m_frame;
 }
 
+void Master::broadcast(int function, vector<uint8_t> const& payload) {
+    uint8_t* start = &m_write_buffer[0];
+    uint8_t const* end = RTU::formatFrame(start, RTU::BROADCAST, function, payload);
+    writePacket(&m_write_buffer[0], end - start);
+}
+
 Frame Master::readReply(int function) {
     Frame frame;
     readReply(frame, function);
@@ -92,8 +98,11 @@ void Master::readRegisters(uint16_t* values, int address,
     RTU::parseReadRegisters(values, m_frame, length);
 }
 
-void Master::broadcast(int function, vector<uint8_t> const& payload) {
-    uint8_t* start = &m_write_buffer[0];
-    uint8_t const* end = RTU::formatFrame(start, RTU::BROADCAST, function, payload);
-    writePacket(&m_write_buffer[0], end - start);
+void Master::writeRegister(int address, uint16_t register_id, uint16_t value) {
+    uint8_t* buffer_start = &m_write_buffer[0];
+    uint8_t const* buffer_end = RTU::formatWriteRegister(
+        buffer_start, address, register_id, value
+    );
+    writePacket(buffer_start, buffer_end - buffer_start);
+    readReply(m_frame, RTU::FUNCTION_WRITE_SINGLE_REGISTER);
 }

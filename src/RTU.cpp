@@ -145,3 +145,12 @@ void RTU::parseReadRegisters(uint16_t* values, Frame const& frame, int length) {
         parse16(&frame.payload[1 + i * 2], values[i]);
     }
 }
+
+uint8_t* RTU::formatWriteRegister(uint8_t* buffer, uint8_t address,
+                                  uint16_t register_id, uint16_t value) {
+    uint8_t payload[4];
+    format16(payload, register_id);
+    format16(payload + 2, value);
+    return formatFrame(buffer, address, FUNCTION_WRITE_SINGLE_REGISTER,
+                       payload, payload + 4);
+}

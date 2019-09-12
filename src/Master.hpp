@@ -107,6 +107,8 @@ namespace modbus {
             uint16_t* values,
             int address, bool input_registers, int start, int length
         );
+
+        void writeRegister(int address, uint16_t register_id, uint16_t value);
     };
 }
 
