@@ -50,6 +50,32 @@ TEST_F(RTUTest, it_throws_if_the_resulting_frame_would_be_bigger_than_256_bytes)
                  std::invalid_argument);
 }
 
+TEST_F(RTUTest, it_parses_a_frame) {
+    uint8_t bytes[] = { 0x02, 0x10, 1, 2, 3, 4, 5, 0x34, 0xEB };
+    Frame frame = RTU::parseFrame(bytes, bytes + 9);
+    ASSERT_EQ(0x02, frame.address);
+    ASSERT_EQ(0x10, frame.function);
+
+    // CRC computed with https://www.lammertbies.nl/comm/info/crc-calculation.html
+    uint8_t payload[5] = { 1, 2, 3, 4, 5 };
+    ASSERT_THAT(frame.payload, ElementsAreArray(payload));
+}
+
+TEST_F(RTUTest, it_throws_if_attempting_to_parse_a_buffer_that_is_too_small) {
+    uint8_t bytes[0];
+    ASSERT_THROW(RTU::parseFrame(bytes, bytes + 3), RTU::TooSmall);
+}
+
+TEST_F(RTUTest, it_throws_if_the_CRC_check_fails) {
+    uint8_t bytes[] = { 0x02, 0x10, 1, 2, 3, 4, 5, 0x34, 0xEA };
+    ASSERT_THROW(RTU::parseFrame(bytes, bytes + 9), RTU::InvalidCRC);
+}
+
+TEST_F(RTUTest, it_throws_if_the_buffer_is_too_small_to_contain_a_RTU_frame) {
+    uint8_t bytes[0];
+    ASSERT_THROW(RTU::isCRCValid(bytes, bytes + 3), RTU::TooSmall);
+}
+
 TEST_F(RTUTest, it_recognizes_a_valid_CRC) {
     uint8_t frame[] = { 0x02, 0x10, 1, 2, 3, 4, 5, 0x34, 0xEB };
     ASSERT_TRUE(RTU::isCRCValid(frame, frame + 9));
