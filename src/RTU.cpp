@@ -63,7 +63,7 @@ void RTU::parseFrame(Frame& frame, uint8_t const* start, uint8_t const* end) {
     frame.address  = start[0];
     frame.function = start[1];
     frame.payload.resize((end - start) - FRAME_OVERHEAD_SIZE);
-    std::copy(start + FRAME_HEADER_SIZE, end, frame.payload.begin());
+    std::copy(start + FRAME_HEADER_SIZE, end - 2, frame.payload.begin());
 }
 
 array<uint8_t, 2> RTU::crc(uint8_t const* start, uint8_t const* end) {
