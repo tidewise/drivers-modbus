@@ -88,6 +88,48 @@ TEST_F(MasterTest, it_does_a_modbus_request) {
     ASSERT_THAT(f.payload, ElementsAreArray(expected));
 }
 
+TEST_F(MasterTest, it_throws_if_receiving_an_unexpected_function_code_in_reply) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    uint8_t request[] = { 0x02, 0x10, 1, 2, 3, 4, 5, 0x34, 0xEB };
+    uint8_t reply[] = { 0x02, 0x00, 0x01, 0x11, 0xC0 };
+    EXPECT_REPLY(vector<uint8_t>(request, request + 9),
+                 vector<uint8_t>(reply, reply + 5));
+
+    ASSERT_THROW(
+        driver.request(0x02, 0x10, vector<uint8_t>{1, 2, 3, 4, 5}),
+        UnexpectedReply);
+}
+
+TEST_F(MasterTest, it_throws_if_receiving_an_exception_function_code_in_reply) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    uint8_t request[] = { 0x02, 0x10, 1, 2, 3, 4, 5, 0x34, 0xEB };
+    uint8_t reply[] = { 0x02, 0x90, 0x01, 0x7D, 0xC0 };
+    EXPECT_REPLY(vector<uint8_t>(request, request + 9),
+                 vector<uint8_t>(reply, reply + 5));
+
+    ASSERT_THROW(
+        driver.request(0x02, 0x10, vector<uint8_t>{1, 2, 3, 4, 5}),
+        RequestException);
+}
+
+TEST_F(MasterTest, it_handles_a_malformed_exception_reply_that_is_lacking_the_exception_code) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    uint8_t request[] = { 0x02, 0x10, 1, 2, 3, 4, 5, 0x34, 0xEB };
+    uint8_t reply[] = { 0x02, 0x90, 0x00, 0xBC };
+    EXPECT_REPLY(vector<uint8_t>(request, request + 9),
+                 vector<uint8_t>(reply, reply + 4));
+
+    ASSERT_THROW(
+        driver.request(0x02, 0x10, vector<uint8_t>{1, 2, 3, 4, 5}),
+        RequestException);
+}
+
 TEST_F(MasterTest, it_does_a_modbus_broadcast) {
     driver.openURI("test://");
 

@@ -4,6 +4,7 @@
 #include <iodrivers_base/Driver.hpp>
 #include <modbus/Master.hpp>
 #include <modbus/Frame.hpp>
+#include <modbus/Exceptions.hpp>
 
 namespace modbus {
     /**
@@ -45,6 +46,14 @@ namespace modbus {
         /** Internal write buffer */
         std::vector<uint8_t> m_write_buffer;
 
+        /** Internal frame object
+         *
+         * This is used to avoid unnecessary memory allocation
+         */
+        Frame m_frame;
+
+        static const int FUNCTION_CODE_EXCEPTION = 0x80;
+
     public:
         Master();
 
@@ -67,8 +76,13 @@ namespace modbus {
          */
         Frame readFrame();
 
+        /** Wait for one frame on the bus and read it
+         */
+        void readFrame(Frame& frame);
+
         /** Send a request and wait for the slave's reply */
-        Frame request(int address, int function, std::vector<uint8_t> const& payload);
+        Frame const& request(int address, int function,
+                             std::vector<uint8_t> const& payload);
 
         /** Send a broadcast
          *
