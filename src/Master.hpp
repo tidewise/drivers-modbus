@@ -80,6 +80,14 @@ namespace modbus {
          */
         void readFrame(Frame& frame);
 
+        /** Wait for the reply for the given request
+         */
+        Frame readReply(int function);
+
+        /** Wait for the reply for the given request
+         */
+        void readReply(Frame& frame, int function);
+
         /** Send a request and wait for the slave's reply */
         Frame const& request(int address, int function,
                              std::vector<uint8_t> const& payload);
@@ -89,6 +97,16 @@ namespace modbus {
          * Does not wait for the turnaround delay
          */
         void broadcast(int function, std::vector<uint8_t> const& payload);
+
+        /** Read a set of registers */
+        std::vector<uint16_t> readRegisters(
+            int address, bool input_registers, int start, int length);
+
+        /** Read a set of registers */
+        void readRegisters(
+            uint16_t* values,
+            int address, bool input_registers, int start, int length
+        );
     };
 }
 

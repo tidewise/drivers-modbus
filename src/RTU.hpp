@@ -33,6 +33,11 @@ namespace modbus {
         /** Number of bytes in a RTU frame header */
         static const int FRAME_HEADER_SIZE = 2;
 
+        enum Functions {
+            FUNCTION_READ_HOLDING_REGISTERS = 0x03,
+            FUNCTION_READ_INPUT_REGISTERS = 0x04
+        };
+
         /** Computes the interframe duration specified by the Modbus-on-serial
          * specification
          */
@@ -83,6 +88,22 @@ namespace modbus {
          * spec, that is: one-before-last byte is LSB and last byte is MSB.
          */
         bool isCRCValid(uint8_t const* start, uint8_t const* end);
+
+        /** Fill a byte buffer with a request to read registers
+         *
+         * @arg whether input registers or holding registers should be read
+         * @arg the start register
+         * @arg length the number of registers to read
+         */
+        uint8_t* formatReadRegisters(
+            uint8_t* buffer,
+            uint8_t address, bool input_registers, uint16_t start, uint8_t length
+        );
+
+        /** Parse a read registers reply */
+        void parseReadRegisters(
+            uint16_t* values, Frame const& frame, int length
+        );
     }
 }
 

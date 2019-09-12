@@ -1,6 +1,7 @@
 #include <modbus/RTU.hpp>
 #include <cstring>
 #include <cmath>
+#include <modbus/Exceptions.hpp>
 
 using namespace std;
 using namespace base;
@@ -92,4 +93,55 @@ bool RTU::isCRCValid(uint8_t const* start, uint8_t const* end) {
     validateBufferSize(start, end, "RTU::isCRCValid");
     auto expected = crc(start, end - 2);
     return (end[-2] == expected[0]) && (end[-1] == expected[1]);
+}
+
+static uint8_t* format16(uint8_t* buffer, uint16_t value) {
+    buffer[0] = (value >> 8) & 0xFF;
+    buffer[1] = (value >> 0) & 0xFF;
+    return buffer + 2;
+}
+
+static uint8_t const* parse16(uint8_t const* buffer, uint16_t& value) {
+    value = (static_cast<uint16_t>(buffer[0]) << 8) |
+            (static_cast<uint16_t>(buffer[1]) << 0);
+    return buffer + 2;
+}
+
+uint8_t* RTU::formatReadRegisters(
+    uint8_t* buffer, uint8_t address,
+    bool input_registers, uint16_t start, uint8_t length) {
+    if (length > 128) {
+        throw std::invalid_argument(
+            "RTU::formatReadRegisters: too many registers requested"
+        );
+    }
+    else if (65535 - start < length) {
+        throw std::invalid_argument(
+            "RTU::formatReadRegisters: attempting to read beyond register 65536"
+        );
+    }
+
+    uint8_t payload[4];
+    format16(payload, start);
+    format16(payload + 2, length);
+
+    Functions function = input_registers ? FUNCTION_READ_INPUT_REGISTERS :
+                                           FUNCTION_READ_HOLDING_REGISTERS;
+    return formatFrame(buffer, address, function, payload, payload + 4);
+}
+
+void RTU::parseReadRegisters(uint16_t* values, Frame const& frame, int length) {
+    uint8_t byte_count = frame.payload[0];
+    if (frame.payload.size() != byte_count + 1u) {
+        throw UnexpectedReply("RTU::parseReadRegisters: reply's advertised byte count "
+                              "and frame payload size differ");
+    }
+    else if (byte_count != length * 2) {
+        throw UnexpectedReply("RTU::parseReadRegisters: reply does not contain as many "
+                              "registers as was expected");
+    }
+
+    for (int i = 0; i < length; ++i) {
+        parse16(&frame.payload[1 + i * 2], values[i]);
+    }
 }

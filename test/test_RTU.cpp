@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <modbus/RTU.hpp>
+#include <modbus/Exceptions.hpp>
 
+using namespace std;
 using namespace modbus;
 using testing::ElementsAreArray;
 
@@ -89,4 +91,70 @@ TEST_F(RTUTest, it_recognizes_an_invalid_CRC_first_byte) {
 TEST_F(RTUTest, it_recognizes_an_invalid_CRC_second_byte) {
     uint8_t frame[] = { 0x02, 0x10, 1, 2, 3, 4, 5, 0x34, 0x0 };
     ASSERT_FALSE(RTU::isCRCValid(frame, frame + 9));
+}
+
+TEST_F(RTUTest, it_formats_a_read_holding_registers_command) {
+    uint8_t buffer[8];
+    uint8_t* end = RTU::formatReadRegisters(buffer, 0x10, false, 0x1020, 0x05);
+    ASSERT_EQ(end - buffer, 8);
+
+    uint8_t expected[] = { 0x10, 0x03, 0x10, 0x20, 0x00, 0x05 };
+    ASSERT_THAT(std::vector<uint8_t>(buffer, end - 2),
+                ElementsAreArray(expected));
+}
+
+TEST_F(RTUTest, it_formats_a_read_input_registers_command) {
+    uint8_t buffer[8];
+    uint8_t* end = RTU::formatReadRegisters(buffer, 0x10, true, 0x1020, 0x05);
+    ASSERT_EQ(end - buffer, 8);
+
+    uint8_t expected[] = { 0x10, 0x04, 0x10, 0x20, 0x00, 0x05 };
+    ASSERT_THAT(std::vector<uint8_t>(buffer, end - 2),
+                ElementsAreArray(expected));
+}
+
+TEST_F(RTUTest, it_throws_if_attempting_to_read_beyond_register_65536) {
+    ASSERT_THROW(RTU::formatReadRegisters(nullptr, 0x10, false, 0xfffe, 2),
+                 std::invalid_argument);
+}
+
+TEST_F(RTUTest, it_throws_if_attempting_to_read_more_than_128_registers) {
+    ASSERT_THROW(RTU::formatReadRegisters(nullptr, 0x10, false, 0, 129),
+                 std::invalid_argument);
+}
+
+TEST_F(RTUTest, it_parses_a_read_register_reply) {
+    Frame frame = { 0x10, 0x03, { 0x04, 0x1, 0x2, 0x3, 0x4 } };
+    uint16_t values[2];
+    RTU::parseReadRegisters(values, frame, 2);
+
+    uint16_t expected[] = { 0x0102, 0x0304 };
+    ASSERT_THAT(vector<uint16_t>(values, values + 2), ElementsAreArray(expected));
+}
+
+TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_is_smaller_than_the_expected) {
+    Frame frame = { 0x10, 0x03, { 2, 1, 2 } };
+    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2), UnexpectedReply);
+}
+
+TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_is_greater_than_the_expected) {
+    Frame frame = { 0x10, 0x03, { 6, 1, 2, 3, 4, 5, 6 } };
+    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2), UnexpectedReply);
+}
+
+TEST_F(RTUTest, it_throws_if_the_byte_count_is_odd) {
+    Frame frame = { 0x10, 0x03, { 5, 1, 2, 3, 4, 5 } };
+    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2), UnexpectedReply);
+}
+
+TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_would_take_more_space_than_the_frame_payload) {
+    Frame frame = { 0x10, 0x03, { 0x06, 0x1, 0x2, 0x3, 0x4, 0x5 } };
+    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2),
+                 UnexpectedReply);
+}
+
+TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_would_take_fewer_space_than_the_frame_payload) {
+    Frame frame = { 0x10, 0x03, { 0x06, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7 } };
+    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2),
+                 UnexpectedReply);
 }
