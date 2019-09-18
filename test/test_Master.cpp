@@ -139,3 +139,37 @@ TEST_F(MasterTest, it_does_a_modbus_broadcast) {
     uint8_t expected[] = { 0x00, 0x10, 6, 7, 8, 9, 0xB7, 0x57 };
     ASSERT_THAT(bytes, ElementsAreArray(expected));
 }
+
+TEST_F(MasterTest, it_does_a_holding_register_read_request) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x06 }
+    );
+    ASSERT_EQ((vector<uint16_t>{ 0x1234, 0x5678 }),
+              driver.readRegisters(0x10, false, 0xabcd, 2));
+}
+
+TEST_F(MasterTest, it_does_a_single_holding_register_read_request) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x01, 0x36, 0x90 },
+        vector<uint8_t>{ 0x10, 0x03, 0x2, 0x12, 0x34, 0x49, 0x30 }
+    );
+    ASSERT_EQ(0x1234, driver.readSingleRegister(0x10, false, 0xabcd));
+}
+
+TEST_F(MasterTest, it_does_a_register_write_request) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x06, 0xab, 0xcd, 0x12, 0x34, 0x36, 0x27 },
+        vector<uint8_t>{ 0x10, 0x06, 0xab, 0xcd, 0x5a, 0x40 }
+    );
+    driver.writeSingleRegister(0x10, 0xabcd, 0x1234);
+}
