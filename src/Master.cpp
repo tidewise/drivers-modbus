@@ -98,7 +98,14 @@ void Master::readRegisters(uint16_t* values, int address,
     RTU::parseReadRegisters(values, m_frame, length);
 }
 
-void Master::writeRegister(int address, uint16_t register_id, uint16_t value) {
+uint16_t Master::readSingleRegister(int address, bool input_registers,
+                                    int register_id) {
+    uint16_t value;
+    readRegisters(&value, address, input_registers, register_id, 1);
+    return value;
+}
+
+void Master::writeSingleRegister(int address, uint16_t register_id, uint16_t value) {
     uint8_t* buffer_start = &m_write_buffer[0];
     uint8_t const* buffer_end = RTU::formatWriteRegister(
         buffer_start, address, register_id, value
