@@ -3,6 +3,6 @@ rock_library(modbus
     HEADERS RTU.hpp Frame.hpp Master.hpp Exceptions.hpp
     DEPS_PKGCONFIG base-types iodrivers_base)
 
-rock_executable(modbus_bin Main.cpp
+rock_executable(modbus_ctl Main.cpp
     DEPS modbus)
 

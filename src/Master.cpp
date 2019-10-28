@@ -12,6 +12,7 @@ int Master::extractPacket(uint8_t const* buffer, size_t bufferSize) const {
 
 Master::Master()
     : iodrivers_base::Driver(RTU::FRAME_MAX_SIZE * 10) {
+    setReadTimeout(base::Time::fromSeconds(1));
     m_read_buffer.resize(MAX_PACKET_SIZE);
     m_write_buffer.resize(MAX_PACKET_SIZE);
     m_frame.payload.reserve(RTU::FRAME_MAX_SIZE);
