@@ -133,8 +133,12 @@ uint8_t* RTU::formatReadRegisters(
 void RTU::parseReadRegisters(uint16_t* values, Frame const& frame, int length) {
     uint8_t byte_count = frame.payload[0];
     if (frame.payload.size() != byte_count + 1u) {
-        throw UnexpectedReply("RTU::parseReadRegisters: reply's advertised byte count "
-                              "and frame payload size differ");
+        throw UnexpectedReply(
+            "RTU::parseReadRegisters: reply's advertised byte count and frame payload "
+            "size differ ("
+            + to_string(byte_count + 1u) + " != "
+            + to_string(frame.payload.size()) + ")"
+        );
     }
     else if (byte_count != length * 2) {
         throw UnexpectedReply("RTU::parseReadRegisters: reply does not contain as many "
