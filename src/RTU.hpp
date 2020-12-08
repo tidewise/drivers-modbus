@@ -1,10 +1,12 @@
 #ifndef MODBUS_RTU_HPP
 #define MODBUS_RTU_HPP
 
-#include <base/Time.hpp>
-#include <modbus/RTU.hpp>
-#include <modbus/Frame.hpp>
 #include <array>
+
+#include <base/Time.hpp>
+#include <modbus/Frame.hpp>
+#include <modbus/Functions.hpp>
+#include <modbus/RTU.hpp>
 
 namespace modbus {
     /**
@@ -32,12 +34,6 @@ namespace modbus {
 
         /** Number of bytes in a RTU frame header */
         static const int FRAME_HEADER_SIZE = 2;
-
-        enum Functions {
-            FUNCTION_READ_HOLDING_REGISTERS = 0x03,
-            FUNCTION_READ_INPUT_REGISTERS = 0x04,
-            FUNCTION_WRITE_SINGLE_REGISTER = 0x06
-        };
 
         /** Computes the interframe duration specified by the Modbus-on-serial
          * specification

@@ -1,4 +1,4 @@
-#include <modbus/Master.hpp>
+#include <modbus/RTUMaster.hpp>
 #include <modbus/RTU.hpp>
 #include <modbus/Exceptions.hpp>
 
@@ -6,11 +6,11 @@ using namespace std;
 using namespace base;
 using namespace modbus;
 
-int Master::extractPacket(uint8_t const* buffer, size_t bufferSize) const {
-    throw std::logic_error("modbus::Master should be read only using readRaw");
+int RTUMaster::extractPacket(uint8_t const* buffer, size_t bufferSize) const {
+    throw std::logic_error("modbus::RTUMaster should be read only using readRaw");
 }
 
-Master::Master()
+RTUMaster::RTUMaster()
     : iodrivers_base::Driver(RTU::FRAME_MAX_SIZE * 10) {
     setReadTimeout(base::Time::fromSeconds(1));
     m_read_buffer.resize(MAX_PACKET_SIZE);
@@ -18,28 +18,28 @@ Master::Master()
     m_frame.payload.reserve(RTU::FRAME_MAX_SIZE);
 }
 
-void Master::setInterframeDelay(base::Time const& delay) {
+void RTUMaster::setInterframeDelay(base::Time const& delay) {
     m_interframe_delay = delay;
 }
 
-base::Time Master::getInterframeDelay() const {
+base::Time RTUMaster::getInterframeDelay() const {
     return m_interframe_delay;
 }
 
-Frame Master::readFrame() {
+Frame RTUMaster::readFrame() {
     Frame result;
     readFrame(result);
     return result;
 }
 
-void Master::readFrame(Frame& frame) {
+void RTUMaster::readFrame(Frame& frame) {
     int c = readRaw(&m_read_buffer[0], m_read_buffer.size(),
                     getReadTimeout(), getReadTimeout(), m_interframe_delay);
 
     RTU::parseFrame(frame, &m_read_buffer[0], &m_read_buffer[c]);
 }
 
-Frame const& Master::request(int address, int function, vector<uint8_t> const& payload) {
+Frame const& RTUMaster::request(int address, int function, vector<uint8_t> const& payload) {
     uint8_t* start = &m_write_buffer[0];
     uint8_t const* end = RTU::formatFrame(start, address, function, payload);
     writePacket(&m_write_buffer[0], end - start);
@@ -48,19 +48,19 @@ Frame const& Master::request(int address, int function, vector<uint8_t> const& p
     return m_frame;
 }
 
-void Master::broadcast(int function, vector<uint8_t> const& payload) {
+void RTUMaster::broadcast(int function, vector<uint8_t> const& payload) {
     uint8_t* start = &m_write_buffer[0];
     uint8_t const* end = RTU::formatFrame(start, RTU::BROADCAST, function, payload);
     writePacket(&m_write_buffer[0], end - start);
 }
 
-Frame Master::readReply(int function) {
+Frame RTUMaster::readReply(int function) {
     Frame frame;
     readReply(frame, function);
     return frame;
 }
 
-void Master::readReply(Frame& frame, int function) {
+void RTUMaster::readReply(Frame& frame, int function) {
     readFrame(frame);
     if (frame.function == function) {
         return;
@@ -78,7 +78,7 @@ void Master::readReply(Frame& frame, int function) {
     }
 }
 
-vector<uint16_t> Master::readRegisters(int address, bool input_registers,
+vector<uint16_t> RTUMaster::readRegisters(int address, bool input_registers,
                                        int start, int length) {
     vector<uint16_t> registers;
     registers.resize(length);
@@ -86,31 +86,31 @@ vector<uint16_t> Master::readRegisters(int address, bool input_registers,
     return registers;
 }
 
-void Master::readRegisters(uint16_t* values, int address,
+void RTUMaster::readRegisters(uint16_t* values, int address,
                            bool input_registers, int start, int length) {
     uint8_t* buffer_start = &m_write_buffer[0];
     uint8_t const* buffer_end = RTU::formatReadRegisters(
         buffer_start, address, input_registers, start, length
     );
     writePacket(buffer_start, buffer_end - buffer_start);
-    readReply(m_frame, input_registers ? RTU::FUNCTION_READ_INPUT_REGISTERS :
-                                         RTU::FUNCTION_READ_HOLDING_REGISTERS);
+    readReply(m_frame, input_registers ? FUNCTION_READ_INPUT_REGISTERS :
+                                         FUNCTION_READ_HOLDING_REGISTERS);
 
     RTU::parseReadRegisters(values, m_frame, length);
 }
 
-uint16_t Master::readSingleRegister(int address, bool input_registers,
+uint16_t RTUMaster::readSingleRegister(int address, bool input_registers,
                                     int register_id) {
     uint16_t value;
     readRegisters(&value, address, input_registers, register_id, 1);
     return value;
 }
 
-void Master::writeSingleRegister(int address, uint16_t register_id, uint16_t value) {
+void RTUMaster::writeSingleRegister(int address, uint16_t register_id, uint16_t value) {
     uint8_t* buffer_start = &m_write_buffer[0];
     uint8_t const* buffer_end = RTU::formatWriteRegister(
         buffer_start, address, register_id, value
     );
     writePacket(buffer_start, buffer_end - buffer_start);
-    readReply(m_frame, RTU::FUNCTION_WRITE_SINGLE_REGISTER);
+    readReply(m_frame, FUNCTION_WRITE_SINGLE_REGISTER);
 }

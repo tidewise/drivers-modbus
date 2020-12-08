@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <modbus/Master.hpp>
+#include <modbus/RTUMaster.hpp>
 #include <iodrivers_base/FixtureGTest.hpp>
 #include <fcntl.h>
 #include <thread>
@@ -10,13 +10,13 @@ using testing::ElementsAreArray;
 using base::Time;
 using namespace modbus;
 
-struct MasterTest : public ::testing::Test, iodrivers_base::Fixture<Master> {
+struct RTUMasterTest : public ::testing::Test, iodrivers_base::Fixture<RTUMaster> {
     int pipeTX = -1;
 
-    MasterTest() {
+    RTUMasterTest() {
     }
 
-    ~MasterTest() {
+    ~RTUMasterTest() {
         if (pipeTX != -1) {
             close(pipeTX);
         }
@@ -40,7 +40,7 @@ struct MasterTest : public ::testing::Test, iodrivers_base::Fixture<Master> {
     }
 };
 
-TEST_F(MasterTest, it_throws_if_calling_readPacket) {
+TEST_F(RTUMasterTest, it_throws_if_calling_readPacket) {
     driver.openURI("test://");
     // push one byte to get into extractPacket
     uint8_t buffer[1];
@@ -48,7 +48,7 @@ TEST_F(MasterTest, it_throws_if_calling_readPacket) {
     ASSERT_THROW(driver.readPacket(buffer, 1024), std::logic_error);
 }
 
-TEST_F(MasterTest, it_uses_the_interframe_delay_to_determine_the_end_of_a_frame) {
+TEST_F(RTUMasterTest, it_uses_the_interframe_delay_to_determine_the_end_of_a_frame) {
     openPipe();
 
     uint8_t bytes[] = { 0x02, 0x10, 1, 2, 3, 4, 5, 0x34, 0xEB };
@@ -72,7 +72,7 @@ TEST_F(MasterTest, it_uses_the_interframe_delay_to_determine_the_end_of_a_frame)
     writeThread.join();
 }
 
-TEST_F(MasterTest, it_does_a_modbus_request) {
+TEST_F(RTUMasterTest, it_does_a_modbus_request) {
     driver.openURI("test://");
 
     IODRIVERS_BASE_MOCK();
@@ -88,7 +88,7 @@ TEST_F(MasterTest, it_does_a_modbus_request) {
     ASSERT_THAT(f.payload, ElementsAreArray(expected));
 }
 
-TEST_F(MasterTest, it_throws_if_receiving_an_unexpected_function_code_in_reply) {
+TEST_F(RTUMasterTest, it_throws_if_receiving_an_unexpected_function_code_in_reply) {
     driver.openURI("test://");
 
     IODRIVERS_BASE_MOCK();
@@ -102,7 +102,7 @@ TEST_F(MasterTest, it_throws_if_receiving_an_unexpected_function_code_in_reply) 
         UnexpectedReply);
 }
 
-TEST_F(MasterTest, it_throws_if_receiving_an_exception_function_code_in_reply) {
+TEST_F(RTUMasterTest, it_throws_if_receiving_an_exception_function_code_in_reply) {
     driver.openURI("test://");
 
     IODRIVERS_BASE_MOCK();
@@ -116,7 +116,7 @@ TEST_F(MasterTest, it_throws_if_receiving_an_exception_function_code_in_reply) {
         RequestException);
 }
 
-TEST_F(MasterTest, it_handles_a_malformed_exception_reply_that_is_lacking_the_exception_code) {
+TEST_F(RTUMasterTest, it_handles_a_malformed_exception_reply_that_is_lacking_the_exception_code) {
     driver.openURI("test://");
 
     IODRIVERS_BASE_MOCK();
@@ -130,7 +130,7 @@ TEST_F(MasterTest, it_handles_a_malformed_exception_reply_that_is_lacking_the_ex
         RequestException);
 }
 
-TEST_F(MasterTest, it_does_a_modbus_broadcast) {
+TEST_F(RTUMasterTest, it_does_a_modbus_broadcast) {
     driver.openURI("test://");
 
     driver.broadcast(0x10, vector<uint8_t>{6, 7, 8, 9});
@@ -140,7 +140,7 @@ TEST_F(MasterTest, it_does_a_modbus_broadcast) {
     ASSERT_THAT(bytes, ElementsAreArray(expected));
 }
 
-TEST_F(MasterTest, it_does_a_holding_register_read_request) {
+TEST_F(RTUMasterTest, it_does_a_holding_register_read_request) {
     driver.openURI("test://");
 
     IODRIVERS_BASE_MOCK();
@@ -152,7 +152,7 @@ TEST_F(MasterTest, it_does_a_holding_register_read_request) {
               driver.readRegisters(0x10, false, 0xabcd, 2));
 }
 
-TEST_F(MasterTest, it_does_a_single_holding_register_read_request) {
+TEST_F(RTUMasterTest, it_does_a_single_holding_register_read_request) {
     driver.openURI("test://");
 
     IODRIVERS_BASE_MOCK();
@@ -163,7 +163,7 @@ TEST_F(MasterTest, it_does_a_single_holding_register_read_request) {
     ASSERT_EQ(0x1234, driver.readSingleRegister(0x10, false, 0xabcd));
 }
 
-TEST_F(MasterTest, it_does_a_register_write_request) {
+TEST_F(RTUMasterTest, it_does_a_register_write_request) {
     driver.openURI("test://");
 
     IODRIVERS_BASE_MOCK();
