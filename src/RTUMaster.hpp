@@ -4,6 +4,7 @@
 #include <iodrivers_base/Driver.hpp>
 #include <modbus/Frame.hpp>
 #include <modbus/Exceptions.hpp>
+#include <modbus/MasterInterface.hpp>
 
 namespace modbus {
     /**
@@ -26,7 +27,7 @@ namespace modbus {
      * it uses readRaw. Using the packet-based interface (readPacket) will
      * throw.
      */
-    class RTUMaster : public iodrivers_base::Driver {
+    class RTUMaster : public iodrivers_base::Driver, public MasterInterface {
         /** Modbus packet extraction is time-based
          *
          * This method just throws

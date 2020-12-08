@@ -4,12 +4,13 @@
 #include <iodrivers_base/Driver.hpp>
 #include <modbus/Frame.hpp>
 #include <modbus/Exceptions.hpp>
+#include <modbus/MasterInterface.hpp>
 
 namespace modbus {
     /**
      * Driver implementing a Modbus TCP master
      */
-    class TCPMaster : public iodrivers_base::Driver {
+    class TCPMaster : public iodrivers_base::Driver, public MasterInterface {
         /** Modbus packet extraction is time-based
          *
          * This method just throws

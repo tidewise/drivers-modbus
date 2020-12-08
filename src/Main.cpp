@@ -1,11 +1,17 @@
 #include <iostream>
-#include <modbus/Master.hpp>
+#include <list>
+#include <memory>
+#include <modbus/RTUMaster.hpp>
+#include <modbus/TCPMaster.hpp>
 
 using namespace std;
 using namespace modbus;
 
 void usage(ostream& stream) {
-    stream << "usage: modbus_ctl URI CMD\n"
+    stream << "usage: modbus_ctl URI [PROTOCOL] CMD\n"
+           << "where URI is a iodrivers_base URI\n"
+           << "      PROTOCOL is either rtu or tcp. It may be omitted, in which\n"
+           << "               case rtu is used by default\n"
            << "\n"
            << "Available Commands\n"
            << "  read-holding ID REG (LENGTH): read holding registers\n"
@@ -15,41 +21,64 @@ void usage(ostream& stream) {
 
 int main(int argc, char** argv)
 {
-    if (argc < 3) {
-        bool error = argc == 1 ? 0 : 1;
+    list<string> args(argv + 1, argv + argc);
+    if (args.size() < 2) {
+        bool error = !args.empty();
         usage(error ? cerr : cout);
         return error;
     }
 
-    string uri = argv[1];
-    string cmd = argv[2];
+    string uri = args.front();
+    args.pop_front();
+
+    string protocol = "rtu";
+    if (args.front() == "tcp" || args.front() == "rtu") {
+        protocol = args.front();
+        args.pop_front();
+    }
+
+    if (args.empty()) {
+        usage(cerr);
+        return 1;
+    }
+
+    string cmd = args.front();
+    args.pop_front();
+
+    std::unique_ptr<modbus::MasterInterface> modbus_master;
+    if (protocol == "tcp") {
+        auto* master = new modbus::TCPMaster(256);
+        modbus_master.reset(master);
+        master->openURI(uri);
+    }
+    else {
+        auto* master = new modbus::RTUMaster();
+        modbus_master.reset(master);
+        master->openURI(uri);
+    }
 
     if (cmd == "read-holding" || cmd == "read-input") {
-        if (argc < 5) {
+        if (args.size() < 2) {
             cerr << "missing register to read\n\n";
             usage(cerr);
             return 1;
         }
-        else if (argc > 6) {
+        else if (args.size() > 3) {
             cerr << "too many arguments\n\n";
             usage(cerr);
             return 1;
         }
 
-        modbus::Master modbus_master;
-        modbus_master.openURI(uri);
-        int address = std::atoi(argv[3]);
-        int start_register = std::atoi(argv[4]);
-        size_t length = (argc > 6) ? std::atoi(argv[5]) : 1;
+        int address = std::stoi(args.front());
+        args.pop_front();
+        int start_register = std::stoi(args.front());
+        args.pop_front();
+
+        size_t length = args.empty() ? std::stoi(args.front()) : 1;
         bool input = cmd == "read-input";
-        auto result = modbus_master.readRegisters(
+        auto result = modbus_master->readRegisters(
             address, input, start_register, length
         );
-
-        if (result.size() != length) {
-            std::cerr << "queried " << length << " registers, but received only "
-                      << result.size() << std::endl;
-        }
 
         for (size_t i = 0; i < length; ++i) {
             std::cout << dec << start_register + i << ": " << result[i] << std::endl;
