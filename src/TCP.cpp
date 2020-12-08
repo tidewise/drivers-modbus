@@ -1,13 +1,13 @@
 #include <modbus/TCP.hpp>
+
 #include <cstring>
 #include <cmath>
+#include <modbus/common.hpp>
 #include <modbus/Exceptions.hpp>
 
 using namespace std;
 using namespace modbus;
-
-static uint8_t* format16(uint8_t* buffer, uint16_t value);
-static uint8_t const* parse16(uint8_t const* buffer, uint16_t& value);
+using namespace modbus::common;
 
 uint16_t TCP::frameLength(uint8_t const* buffer) {
     uint16_t lengthField;
@@ -93,18 +93,6 @@ void TCP::parseFrame(Frame& frame, uint16_t transactionID,
     std::copy(start + 8, end, frame.payload.begin());
 }
 
-static uint8_t* format16(uint8_t* buffer, uint16_t value) {
-    buffer[0] = (value >> 8) & 0xFF;
-    buffer[1] = (value >> 0) & 0xFF;
-    return buffer + 2;
-}
-
-static uint8_t const* parse16(uint8_t const* buffer, uint16_t& value) {
-    value = (static_cast<uint16_t>(buffer[0]) << 8) |
-            (static_cast<uint16_t>(buffer[1]) << 0);
-    return buffer + 2;
-}
-
 uint8_t* TCP::formatReadRegisters(
     uint8_t* buffer,
     uint16_t transactionID, uint8_t address,
@@ -129,31 +117,32 @@ uint8_t* TCP::formatReadRegisters(
     return formatFrame(buffer, transactionID, address, function, payload, payload + 4);
 }
 
-void TCP::parseReadRegisters(uint16_t* values, Frame const& frame, int length) {
-    uint8_t byte_count = frame.payload[0];
-    if (frame.payload.size() != byte_count + 1u) {
-        throw UnexpectedReply(
-            "TCP::parseReadRegisters: reply's advertised byte count and frame payload "
-            "size differ ("
-            + to_string(byte_count + 1u) + " != "
-            + to_string(frame.payload.size()) + ")"
-        );
-    }
-    else if (byte_count != length * 2) {
-        throw UnexpectedReply("TCP::parseReadRegisters: reply does not contain as many "
-                              "registers as was expected");
-    }
-
-    for (int i = 0; i < length; ++i) {
-        parse16(&frame.payload[1 + i * 2], values[i]);
-    }
-}
-
 uint8_t* TCP::formatWriteRegister(uint8_t* buffer, uint16_t transactionID, uint8_t address,
                                   uint16_t register_id, uint16_t value) {
     uint8_t payload[4];
     format16(payload, register_id);
     format16(payload + 2, value);
     return formatFrame(buffer, transactionID, address, FUNCTION_WRITE_SINGLE_REGISTER,
+                       payload, payload + 4);
+}
+
+uint8_t* TCP::formatReadDigitalInputs(
+    uint8_t* buffer, uint16_t transactionID, uint8_t address,
+    bool coils, uint16_t register_id, int count
+) {
+    uint8_t payload[4];
+    format16(payload, register_id);
+    format16(payload + 2, count);
+    auto function = coils ? FUNCTION_READ_COILS : FUNCTION_READ_DIGITAL_INPUTS;
+    return formatFrame(buffer, transactionID, address, function, payload, payload + 4);
+}
+
+uint8_t* TCP::formatWriteSingleCoil(uint8_t* buffer, uint16_t transactionID, uint8_t address,
+                                    uint16_t register_id, bool value) {
+    uint8_t payload[4];
+    format16(payload, register_id);
+    payload[2] = value ? 0xff : 0;
+    payload[3] = 0;
+    return formatFrame(buffer, transactionID, address, FUNCTION_WRITE_SINGLE_COIL,
                        payload, payload + 4);
 }

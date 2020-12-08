@@ -142,3 +142,52 @@ TEST_F(TCPMasterTest, it_does_a_register_write_request) {
     driver.writeSingleRegister(0x10, 0xabcd, 0x1234);
 }
 
+TEST_F(TCPMasterTest, it_reads_multiple_coils) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0xaa, 0x01, 0, 0, 0, 6, 0x10, 0x01, 0x12, 0x34, 0x00, 0x09 },
+        vector<uint8_t>{ 0xaa, 0x01, 0, 0, 0, 5, 0x10, 0x01, 0x2, 0xab, 0xcd }
+    );
+    auto values = driver.readDigitalInputs(0x10, true, 0x1234, 9);
+
+    bool expected[9] = { true, true, false, true, false, true, false, true, true };
+    ASSERT_THAT(values, ElementsAreArray(expected));
+}
+
+TEST_F(TCPMasterTest, it_reads_multiple_digital_inputs) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0xaa, 0x01, 0, 0, 0, 6, 0x10, 0x02, 0x12, 0x34, 0x00, 0x09 },
+        vector<uint8_t>{ 0xaa, 0x01, 0, 0, 0, 5, 0x10, 0x02, 0x2, 0xab, 0xcd }
+    );
+    auto values = driver.readDigitalInputs(0x10, false, 0x1234, 9);
+
+    bool expected[9] = { true, true, false, true, false, true, false, true, true };
+    ASSERT_THAT(values, ElementsAreArray(expected));
+}
+
+TEST_F(TCPMasterTest, it_does_a_coil_ON_write_request) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0xaa, 0x01, 0, 0, 0, 6, 0x10, 0x05, 0x12, 0x34, 0xff, 0x00 },
+        vector<uint8_t>{ 0xaa, 0x01, 0, 0, 0, 6, 0x10, 0x05, 0x12, 0x34, 0xff, 0x00 }
+    );
+    driver.writeSingleCoil(0x10, 0x1234, true);
+}
+
+TEST_F(TCPMasterTest, it_does_a_coil_OFF_write_request) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0xaa, 0x01, 0, 0, 0, 6, 0x10, 0x05, 0x12, 0x34, 0x00, 0x00 },
+        vector<uint8_t>{ 0xaa, 0x01, 0, 0, 0, 6, 0x10, 0x05, 0x12, 0x34, 0x00, 0x00 }
+    );
+    driver.writeSingleCoil(0x10, 0x1234, false);
+}

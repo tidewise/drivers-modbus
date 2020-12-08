@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <modbus/RTUMaster.hpp>
+#include <modbus/Exceptions.hpp>
 #include <iodrivers_base/FixtureGTest.hpp>
 #include <fcntl.h>
 #include <thread>
@@ -172,4 +173,56 @@ TEST_F(RTUMasterTest, it_does_a_register_write_request) {
         vector<uint8_t>{ 0x10, 0x06, 0xab, 0xcd, 0x5a, 0x40 }
     );
     driver.writeSingleRegister(0x10, 0xabcd, 0x1234);
+}
+
+TEST_F(RTUMasterTest, it_reads_multiple_coils) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    // CRC Computed with https://www.lammertbies.nl/comm/info/crc-calculation.html
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x01, 0x12, 0x34, 0x00, 0x09, 0xbb, 0xfb },
+        vector<uint8_t>{ 0x10, 0x01, 0x02, 0xab, 0xcd, 0xfb, 0x5a }
+    );
+    auto values = driver.readDigitalInputs(0x10, true, 0x1234, 9);
+
+    bool expected[9] = { true, true, false, true, false, true, false, true, true };
+    ASSERT_THAT(values, ElementsAreArray(expected));
+}
+
+TEST_F(RTUMasterTest, it_reads_multiple_digital_inputs) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    // CRC Computed with https://www.lammertbies.nl/comm/info/crc-calculation.html
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x02, 0x12, 0x34, 0x00, 0x09, 0xff, 0xfb },
+        vector<uint8_t>{ 0x10, 0x02, 0x02, 0xab, 0xcd, 0xfb, 0x1e }
+    );
+    auto values = driver.readDigitalInputs(0x10, false, 0x1234, 9);
+
+    bool expected[9] = { true, true, false, true, false, true, false, true, true };
+    ASSERT_THAT(values, ElementsAreArray(expected));
+}
+
+TEST_F(RTUMasterTest, it_does_a_coil_ON_write_request) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x05, 0x12, 0x34, 0xff, 0x00, 0xcb, 0xcd },
+        vector<uint8_t>{ 0x10, 0x05, 0x12, 0x34, 0xff, 0x00, 0xcb, 0xcd }
+    );
+    driver.writeSingleCoil(0x10, 0x1234, true);
+}
+
+TEST_F(RTUMasterTest, it_does_a_coil_OFF_write_request) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x05, 0x12, 0x34, 0x00, 0x00, 0x8a, 0x3d },
+        vector<uint8_t>{ 0x10, 0x05, 0x12, 0x34, 0x00, 0x00, 0x8a, 0x3d }
+    );
+    driver.writeSingleCoil(0x10, 0x1234, false);
 }

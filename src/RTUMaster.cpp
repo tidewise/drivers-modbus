@@ -1,6 +1,8 @@
 #include <modbus/RTUMaster.hpp>
-#include <modbus/RTU.hpp>
+
+#include <modbus/common.hpp>
 #include <modbus/Exceptions.hpp>
+#include <modbus/RTU.hpp>
 
 using namespace std;
 using namespace base;
@@ -96,7 +98,7 @@ void RTUMaster::readRegisters(uint16_t* values, int address,
     readReply(m_frame, input_registers ? FUNCTION_READ_INPUT_REGISTERS :
                                          FUNCTION_READ_HOLDING_REGISTERS);
 
-    RTU::parseReadRegisters(values, m_frame, length);
+    common::parseReadRegisters(values, m_frame, length);
 }
 
 uint16_t RTUMaster::readSingleRegister(int address, bool input_registers,
@@ -113,4 +115,28 @@ void RTUMaster::writeSingleRegister(int address, uint16_t register_id, uint16_t 
     );
     writePacket(buffer_start, buffer_end - buffer_start);
     readReply(m_frame, FUNCTION_WRITE_SINGLE_REGISTER);
+}
+
+void RTUMaster::writeSingleCoil(int address, uint16_t register_id, bool value) {
+    uint8_t* buffer_start = &m_write_buffer[0];
+    uint8_t const* buffer_end = RTU::formatWriteSingleCoil(
+        buffer_start, address, register_id, value
+    );
+    writePacket(buffer_start, buffer_end - buffer_start);
+    readReply(m_frame, FUNCTION_WRITE_SINGLE_COIL);
+}
+
+std::vector<bool> RTUMaster::readDigitalInputs(int address, bool coils, uint16_t register_id, uint16_t count) {
+    uint8_t* buffer_start = &m_write_buffer[0];
+    uint8_t const* buffer_end = RTU::formatReadDigitalInputs(
+        buffer_start, address, coils, register_id, count
+    );
+    writePacket(buffer_start, buffer_end - buffer_start);
+
+    auto function = coils ? FUNCTION_READ_COILS : FUNCTION_READ_DIGITAL_INPUTS;
+    readReply(m_frame, function);
+
+    std::vector<bool> values;
+    common::parseReadDigitalInputs(values, m_frame, count);
+    return values;
 }

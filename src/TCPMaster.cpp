@@ -1,6 +1,8 @@
 #include <modbus/TCPMaster.hpp>
-#include <modbus/TCP.hpp>
+
+#include <modbus/common.hpp>
 #include <modbus/Exceptions.hpp>
+#include <modbus/TCP.hpp>
 
 using namespace std;
 using namespace base;
@@ -112,7 +114,7 @@ void TCPMaster::readRegisters(
     readReply(m_frame, input_registers ? FUNCTION_READ_INPUT_REGISTERS :
                                          FUNCTION_READ_HOLDING_REGISTERS);
 
-    TCP::parseReadRegisters(values, m_frame, length);
+    common::parseReadRegisters(values, m_frame, length);
 }
 
 uint16_t TCPMaster::readSingleRegister(int address, bool input_registers, int register_id) {
@@ -129,4 +131,30 @@ void TCPMaster::writeSingleRegister(int address, uint16_t register_id, uint16_t 
     );
     writePacket(buffer_start, buffer_end - buffer_start);
     readReply(m_frame, FUNCTION_WRITE_SINGLE_REGISTER);
+}
+
+void TCPMaster::writeSingleCoil(int address, uint16_t register_id, bool value) {
+    uint8_t* buffer_start = &m_write_buffer[0];
+    m_transaction_id = allocateTransactionID();
+    uint8_t const* buffer_end = TCP::formatWriteSingleCoil(
+        buffer_start, m_transaction_id, address, register_id, value
+    );
+    writePacket(buffer_start, buffer_end - buffer_start);
+    readReply(m_frame, FUNCTION_WRITE_SINGLE_COIL);
+}
+
+std::vector<bool> TCPMaster::readDigitalInputs(int address, bool coils, uint16_t register_id, uint16_t count) {
+    uint8_t* buffer_start = &m_write_buffer[0];
+    m_transaction_id = allocateTransactionID();
+    uint8_t const* buffer_end = TCP::formatReadDigitalInputs(
+        buffer_start, m_transaction_id, address, coils, register_id, count
+    );
+    writePacket(buffer_start, buffer_end - buffer_start);
+
+    auto function = coils ? FUNCTION_READ_COILS : FUNCTION_READ_DIGITAL_INPUTS;
+    readReply(m_frame, function);
+
+    std::vector<bool> values;
+    common::parseReadDigitalInputs(values, m_frame, count);
+    return values;
 }

@@ -110,6 +110,10 @@ namespace modbus {
         uint16_t readSingleRegister(int address, bool input_registers, int register_id);
 
         void writeSingleRegister(int address, uint16_t register_id, uint16_t value);
+
+        void writeSingleCoil(int address, uint16_t register_id, bool value);
+
+        std::vector<bool> readDigitalInputs(int address, bool coils, uint16_t register_id, uint16_t count);
     };
 }
 
