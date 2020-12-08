@@ -16,6 +16,9 @@ void usage(ostream& stream) {
            << "Available Commands\n"
            << "  read-holding ID REG (LENGTH): read holding registers\n"
            << "  read-input ID REG (LENGTH): read input registers\n"
+           << "  read-coil ID REG (LENGTH): read coils\n"
+           << "  read-din ID REG (LENGTH): read digital inputs\n"
+           << "  write-coil ID REG VALUE: write a single coil\n"
            << endl;
 }
 
@@ -83,6 +86,49 @@ int main(int argc, char** argv)
         for (size_t i = 0; i < length; ++i) {
             std::cout << dec << start_register + i << ": " << result[i] << std::endl;
         }
+    }
+    else if (cmd == "read-coil" || cmd == "read-din") {
+        if (args.size() < 2) {
+            cerr << "missing coil to read\n\n";
+            usage(cerr);
+            return 1;
+        }
+        else if (args.size() > 3) {
+            cerr << "too many arguments\n\n";
+            usage(cerr);
+            return 1;
+        }
+
+        int address = std::stoi(args.front());
+        args.pop_front();
+        int start_input = std::stoi(args.front());
+        args.pop_front();
+
+        size_t length = args.empty() ? std::stoi(args.front()) : 1;
+        bool coil = cmd == "read-coil";
+        auto result = modbus_master->readDigitalInputs(
+            address, coil, start_input, length
+        );
+
+        for (size_t i = 0; i < length; ++i) {
+            std::cout << dec << start_input + i << ": " << result[i] << std::endl;
+        }
+    }
+    else if (cmd == "write-coil") {
+        if (args.size() != 3) {
+            cerr << "wrong number of arguments\n\n";
+            usage(cerr);
+            return 1;
+        }
+
+        int address = std::stoi(args.front());
+        args.pop_front();
+        int input = std::stoi(args.front());
+        args.pop_front();
+        bool value = std::stoi(args.front());
+        args.pop_front();
+
+        modbus_master->writeSingleCoil(address, input, value);
     }
     else {
         cerr << "unknown command '" << cmd << "'\n\n";
