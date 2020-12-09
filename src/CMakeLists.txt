@@ -3,7 +3,7 @@ rock_library(modbus
         Exceptions.cpp common.cpp
     HEADERS TCP.hpp TCPMaster.hpp RTU.hpp RTUMaster.hpp
         Master.hpp Frame.hpp Exceptions.hpp common.hpp
-        MasterInterface.hpp
+        MasterInterface.hpp Functions.hpp
     DEPS_PKGCONFIG base-types iodrivers_base)
 
 rock_executable(modbus_ctl Main.cpp
