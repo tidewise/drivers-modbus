@@ -77,7 +77,7 @@ int main(int argc, char** argv)
         int start_register = std::stoi(args.front());
         args.pop_front();
 
-        size_t length = args.empty() ? std::stoi(args.front()) : 1;
+        size_t length = args.empty() ? 1 : std::stoi(args.front());
         bool input = cmd == "read-input";
         auto result = modbus_master->readRegisters(
             address, input, start_register, length
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
         int start_input = std::stoi(args.front());
         args.pop_front();
 
-        size_t length = args.empty() ? std::stoi(args.front()) : 1;
+        size_t length = args.empty() ? 1 : std::stoi(args.front());
         bool coil = cmd == "read-coil";
         auto result = modbus_master->readDigitalInputs(
             address, coil, start_input, length
