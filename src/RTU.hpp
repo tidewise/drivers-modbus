@@ -1,10 +1,12 @@
 #ifndef MODBUS_RTU_HPP
 #define MODBUS_RTU_HPP
 
-#include <base/Time.hpp>
-#include <modbus/RTU.hpp>
-#include <modbus/Frame.hpp>
 #include <array>
+
+#include <base/Time.hpp>
+#include <modbus/Frame.hpp>
+#include <modbus/Functions.hpp>
+#include <modbus/RTU.hpp>
 
 namespace modbus {
     /**
@@ -32,12 +34,6 @@ namespace modbus {
 
         /** Number of bytes in a RTU frame header */
         static const int FRAME_HEADER_SIZE = 2;
-
-        enum Functions {
-            FUNCTION_READ_HOLDING_REGISTERS = 0x03,
-            FUNCTION_READ_INPUT_REGISTERS = 0x04,
-            FUNCTION_WRITE_SINGLE_REGISTER = 0x06
-        };
 
         /** Computes the interframe duration specified by the Modbus-on-serial
          * specification
@@ -101,9 +97,10 @@ namespace modbus {
             uint8_t address, bool input_registers, uint16_t start, uint8_t length
         );
 
-        /** Parse a read registers reply */
-        void parseReadRegisters(
-            uint16_t* values, Frame const& frame, int length
+        /** Fill a byte buffer with a request to read multiple coils or digital inputs */
+        uint8_t* formatReadDigitalInputs(
+            uint8_t* buffer, uint8_t address,
+            bool coils, uint16_t register_id, int count
         );
 
         /** Fill a byte buffer with a request to write a single register
@@ -113,6 +110,15 @@ namespace modbus {
          */
         uint8_t* formatWriteRegister(
             uint8_t* buffer, uint8_t address, uint16_t register_id, uint16_t value
+        );
+
+        /** Fill a byte buffer with a request to write a coil
+         *
+         * @arg the register
+         * @arg the coil value
+         */
+        uint8_t* formatWriteSingleCoil(
+            uint8_t* buffer, uint8_t address, uint16_t register_id, bool value
         );
     }
 }

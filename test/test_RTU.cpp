@@ -123,42 +123,6 @@ TEST_F(RTUTest, it_throws_if_attempting_to_read_more_than_128_registers) {
                  std::invalid_argument);
 }
 
-TEST_F(RTUTest, it_parses_a_read_register_reply) {
-    Frame frame = { 0x10, 0x03, { 0x04, 0x1, 0x2, 0x3, 0x4 } };
-    uint16_t values[2];
-    RTU::parseReadRegisters(values, frame, 2);
-
-    uint16_t expected[] = { 0x0102, 0x0304 };
-    ASSERT_THAT(vector<uint16_t>(values, values + 2), ElementsAreArray(expected));
-}
-
-TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_is_smaller_than_the_expected) {
-    Frame frame = { 0x10, 0x03, { 2, 1, 2 } };
-    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2), UnexpectedReply);
-}
-
-TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_is_greater_than_the_expected) {
-    Frame frame = { 0x10, 0x03, { 6, 1, 2, 3, 4, 5, 6 } };
-    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2), UnexpectedReply);
-}
-
-TEST_F(RTUTest, it_throws_if_the_byte_count_is_odd) {
-    Frame frame = { 0x10, 0x03, { 5, 1, 2, 3, 4, 5 } };
-    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2), UnexpectedReply);
-}
-
-TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_would_take_more_space_than_the_frame_payload) {
-    Frame frame = { 0x10, 0x03, { 0x06, 0x1, 0x2, 0x3, 0x4, 0x5 } };
-    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2),
-                 UnexpectedReply);
-}
-
-TEST_F(RTUTest, it_throws_if_the_amount_of_registers_in_the_reply_would_take_fewer_space_than_the_frame_payload) {
-    Frame frame = { 0x10, 0x03, { 0x06, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7 } };
-    ASSERT_THROW(RTU::parseReadRegisters(nullptr, frame, 2),
-                 UnexpectedReply);
-}
-
 TEST_F(RTUTest, it_formats_a_single_register_write) {
     uint8_t buffer[8];
     uint8_t* end = RTU::formatWriteRegister(buffer, 0x10, 0x1020, 0x1121);
