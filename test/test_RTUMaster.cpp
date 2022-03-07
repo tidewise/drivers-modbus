@@ -158,6 +158,22 @@ TEST_F(RTUMasterTest, it_retries_on_CRC_error) {
               driver.readRegisters(0x10, false, 0xabcd, 2));
 }
 
+TEST_F(RTUMasterTest, it_accounts_for_invalid_data) {
+    driver.openURI("test://");
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x07 }
+    );
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x06 }
+    );
+    driver.readRegisters(0x10, false, 0xabcd, 2);
+    ASSERT_EQ(9, driver.getStatus().bad_rx);
+}
+
 TEST_F(RTUMasterTest, it_does_timeout_if_the_CRC_error_is_permanent) {
     driver.openURI("test://");
 

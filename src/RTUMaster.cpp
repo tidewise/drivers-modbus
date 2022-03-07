@@ -38,7 +38,13 @@ void RTUMaster::readFrame(Frame& frame) {
     int c = readRaw(&m_read_buffer[0], m_read_buffer.size(),
                     getReadTimeout(), getReadTimeout(), m_interframe_delay);
 
-    RTU::parseFrame(frame, &m_read_buffer[0], &m_read_buffer[c]);
+    try {
+        RTU::parseFrame(frame, &m_read_buffer[0], &m_read_buffer[c]);
+    }
+    catch(...) {
+        m_stats.bad_rx += c;
+        throw;
+    }
 }
 
 Frame const& RTUMaster::request(int address, int function, vector<uint8_t> const& payload) {
