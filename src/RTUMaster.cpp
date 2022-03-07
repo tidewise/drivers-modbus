@@ -44,9 +44,10 @@ void RTUMaster::readFrame(Frame& frame) {
 Frame const& RTUMaster::request(int address, int function, vector<uint8_t> const& payload) {
     uint8_t* start = &m_write_buffer[0];
     uint8_t const* end = RTU::formatFrame(start, address, function, payload);
-    writePacket(&m_write_buffer[0], end - start);
-
-    readReply(m_frame, function);
+    writePacketAndReadReply(
+        &m_write_buffer[0], end - start,
+        m_frame, function
+    );
     return m_frame;
 }
 
@@ -88,15 +89,39 @@ vector<uint16_t> RTUMaster::readRegisters(int address, bool input_registers,
     return registers;
 }
 
+void RTUMaster::writePacketAndReadReply(
+    uint8_t const* buffer, int bufsize,
+    Frame& frame, int function
+) {
+    Time deadline = Time::now() + getReadTimeout();
+    do
+    {
+        try {
+            writePacket(buffer, bufsize);
+            readReply(m_frame, function);
+            return;
+        }
+        catch(modbus::RTU::InvalidCRC const&) {
+            if (Time::now() > deadline) {
+                throw;
+            }
+        }
+    }
+    while(true);
+}
+
 void RTUMaster::readRegisters(uint16_t* values, int address,
                            bool input_registers, int start, int length) {
     uint8_t* buffer_start = &m_write_buffer[0];
     uint8_t const* buffer_end = RTU::formatReadRegisters(
         buffer_start, address, input_registers, start, length
     );
-    writePacket(buffer_start, buffer_end - buffer_start);
-    readReply(m_frame, input_registers ? FUNCTION_READ_INPUT_REGISTERS :
-                                         FUNCTION_READ_HOLDING_REGISTERS);
+
+    writePacketAndReadReply(
+        buffer_start, buffer_end - buffer_start,
+        m_frame, input_registers ? FUNCTION_READ_INPUT_REGISTERS :
+                                   FUNCTION_READ_HOLDING_REGISTERS
+    );
 
     common::parseReadRegisters(values, m_frame, length);
 }
@@ -113,8 +138,10 @@ void RTUMaster::writeSingleRegister(int address, uint16_t register_id, uint16_t 
     uint8_t const* buffer_end = RTU::formatWriteRegister(
         buffer_start, address, register_id, value
     );
-    writePacket(buffer_start, buffer_end - buffer_start);
-    readReply(m_frame, FUNCTION_WRITE_SINGLE_REGISTER);
+    writePacketAndReadReply(
+        buffer_start, buffer_end - buffer_start,
+        m_frame, FUNCTION_WRITE_SINGLE_REGISTER
+    );
 }
 
 void RTUMaster::writeSingleCoil(int address, uint16_t register_id, bool value) {
@@ -122,8 +149,10 @@ void RTUMaster::writeSingleCoil(int address, uint16_t register_id, bool value) {
     uint8_t const* buffer_end = RTU::formatWriteSingleCoil(
         buffer_start, address, register_id, value
     );
-    writePacket(buffer_start, buffer_end - buffer_start);
-    readReply(m_frame, FUNCTION_WRITE_SINGLE_COIL);
+    writePacketAndReadReply(
+        buffer_start, buffer_end - buffer_start,
+        m_frame, FUNCTION_WRITE_SINGLE_COIL
+    );
 }
 
 std::vector<bool> RTUMaster::readDigitalInputs(int address, bool coils, uint16_t register_id, uint16_t count) {
@@ -131,10 +160,12 @@ std::vector<bool> RTUMaster::readDigitalInputs(int address, bool coils, uint16_t
     uint8_t const* buffer_end = RTU::formatReadDigitalInputs(
         buffer_start, address, coils, register_id, count
     );
-    writePacket(buffer_start, buffer_end - buffer_start);
-
     auto function = coils ? FUNCTION_READ_COILS : FUNCTION_READ_DIGITAL_INPUTS;
-    readReply(m_frame, function);
+
+    writePacketAndReadReply(
+        buffer_start, buffer_end - buffer_start,
+        m_frame, function
+    );
 
     std::vector<bool> values;
     common::parseReadDigitalInputs(values, m_frame, count);
