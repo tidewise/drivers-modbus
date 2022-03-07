@@ -54,6 +54,11 @@ namespace modbus {
 
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
 
+        void writePacketAndReadReply(
+            uint8_t const* buffer, int bufsize,
+            Frame& frame, int function
+        );
+
     public:
         RTUMaster();
 
