@@ -2,8 +2,8 @@
 #define MODBUS_RTU_MASTER_HPP
 
 #include <iodrivers_base/Driver.hpp>
-#include <modbus/Frame.hpp>
 #include <modbus/Exceptions.hpp>
+#include <modbus/Frame.hpp>
 #include <modbus/MasterInterface.hpp>
 
 namespace modbus {
@@ -54,10 +54,10 @@ namespace modbus {
 
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
 
-        void writePacketAndReadReply(
-            uint8_t const* buffer, int bufsize,
-            Frame& frame, int function
-        );
+        void writePacketAndReadReply(uint8_t const* buffer,
+            int bufsize,
+            Frame& frame,
+            int function);
 
     public:
         RTUMaster();
@@ -94,8 +94,9 @@ namespace modbus {
         void readReply(Frame& frame, int function);
 
         /** Send a request and wait for the slave's reply */
-        Frame const& request(int address, int function,
-                             std::vector<uint8_t> const& payload);
+        Frame const& request(int address,
+            int function,
+            std::vector<uint8_t> const& payload);
 
         /** Send a broadcast
          *
@@ -104,14 +105,17 @@ namespace modbus {
         void broadcast(int function, std::vector<uint8_t> const& payload);
 
         /** Read a set of registers */
-        std::vector<uint16_t> readRegisters(
-            int address, bool input_registers, int start, int length);
+        std::vector<uint16_t> readRegisters(int address,
+            bool input_registers,
+            int start,
+            int length);
 
         /** Read a set of registers */
-        void readRegisters(
-            uint16_t* values,
-            int address, bool input_registers, int start, int length
-        );
+        void readRegisters(uint16_t* values,
+            int address,
+            bool input_registers,
+            int start,
+            int length);
 
         uint16_t readSingleRegister(int address, bool input_registers, int register_id);
 
@@ -119,7 +123,10 @@ namespace modbus {
 
         void writeSingleCoil(int address, uint16_t register_id, bool value);
 
-        std::vector<bool> readDigitalInputs(int address, bool coils, uint16_t register_id, uint16_t count);
+        std::vector<bool> readDigitalInputs(int address,
+            bool coils,
+            uint16_t register_id,
+            uint16_t count);
     };
 }
 
