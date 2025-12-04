@@ -60,8 +60,12 @@ namespace modbus {
 
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
 
+        /** Increases the error count by 8 */
         void increaseErrorCount();
+
+        /** Decreases the error count by 1 */
         void decreaseErrorCount();
+
         void writePacketAndReadReply(uint8_t const* buffer,
             int bufsize,
             Frame& frame,
