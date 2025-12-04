@@ -52,8 +52,16 @@ namespace modbus {
          */
         Frame m_frame;
 
+        /** Error counter */
+        uint8_t m_error_count;
+
+        /** Error threshold before throwing */
+        uint8_t m_error_threshold;
+
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
 
+        void increaseErrorCount();
+        void decreaseErrorCount();
         void writePacketAndReadReply(uint8_t const* buffer,
             int bufsize,
             Frame& frame,

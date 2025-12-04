@@ -113,19 +113,35 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
     Frame& frame,
     int function)
 {
-    Time deadline = Time::now() + getReadTimeout();
     do {
         try {
             writePacket(buffer, bufsize);
             readReply(m_frame, function);
+            decreaseErrorCount();
             return;
         }
         catch (modbus::RTU::InvalidCRC const&) {
-            if (Time::now() > deadline) {
+            if (m_error_count > m_error_threshold) {
                 throw;
             }
+            increaseErrorCount();
         }
     } while (true);
+}
+
+void RTUMaster::increaseErrorCount()
+{
+    if (m_error_count > m_error_threshold) {
+        throw;
+    }
+    m_error_count += 8;
+}
+
+void RTUMaster::decreaseErrorCount()
+{
+    if (m_error_count > 0) {
+        m_error_count--;
+    }
 }
 
 void RTUMaster::readRegisters(uint16_t* values,
