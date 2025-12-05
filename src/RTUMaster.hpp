@@ -61,7 +61,7 @@ namespace modbus {
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
 
         /** Increases the error count by 8 */
-        void increaseErrorCount();
+        void increaseErrorCountOrThrow();
 
         /** Decreases the error count by 1 */
         void decreaseErrorCount();
@@ -70,6 +70,12 @@ namespace modbus {
             int bufsize,
             Frame& frame,
             int function);
+
+        void writePacketAndReadReplyRegisters(uint8_t const* buffer,
+            int bufsize,
+            Frame& frame,
+            int function,
+            uint8_t const& length);
 
     public:
         RTUMaster();

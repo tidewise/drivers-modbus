@@ -20,7 +20,7 @@ uint8_t const* common::parse16(uint8_t const* buffer, uint16_t& value)
 
 void common::parseReadRegisters(uint16_t* values, Frame const& frame, int length)
 {
-    validateReply(frame, length * 2);
+    validateReplyRegisters(frame, length);
 
     for (int i = 0; i < length; ++i) {
         parse16(&frame.payload[1 + i * 2], values[i]);
@@ -59,20 +59,20 @@ void common::parseReadDigitalInputs(std::vector<bool>& values,
     }
 }
 
-void common::validateReply(Frame const& frame, uint8_t expected_size)
+void common::validateReplyRegisters(Frame const& frame, uint8_t expected_size)
 {
-    if (frame.payload.empty()) {
-        throw UnexpectedReply("RTU::parseReadRegisters: empty reply");
-    }
     uint8_t byte_count = frame.payload[0];
+    if (frame.payload.empty()) {
+        throw UnexpectedReply("Registers: empty reply");
+    }
     if (frame.payload.size() != byte_count + 1u) {
         throw UnexpectedReply(
-            "RTU::parseReadRegisters: reply's advertised byte count and frame payload "
+            "Registers: reply's advertised byte count and frame payload "
             "size differ (" +
             to_string(byte_count + 1u) + " != " + to_string(frame.payload.size()) + ")");
     }
-    else if (byte_count != expected_size) {
-        throw UnexpectedReply("RTU::parseReadRegisters: reply does not contain as many "
+    else if (byte_count != (expected_size * 2)) {
+        throw UnexpectedReply("reply does not contain as many "
                               "registers as was expected");
     }
 }

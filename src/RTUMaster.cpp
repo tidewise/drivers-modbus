@@ -121,20 +121,44 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
             return;
         }
         catch (modbus::RTU::InvalidCRC const&) {
-            if (m_error_count > m_error_threshold) {
-                throw;
-            }
-            increaseErrorCount();
+            increaseErrorCountOrThrow();
+        }
+        catch (UnexpectedReply const&) {
+            increaseErrorCountOrThrow();
         }
     } while (true);
 }
 
-void RTUMaster::increaseErrorCount()
+void RTUMaster::writePacketAndReadReplyRegisters(uint8_t const* buffer,
+    int bufsize,
+    Frame& frame,
+    int function,
+    uint8_t const& length)
 {
+    do {
+        try {
+            writePacket(buffer, bufsize);
+            readReply(m_frame, function);
+            common::validateReplyRegisters(m_frame, length);
+            decreaseErrorCount();
+            return;
+        }
+        catch (modbus::RTU::InvalidCRC const&) {
+            increaseErrorCountOrThrow();
+        }
+        catch (UnexpectedReply const&) {
+            increaseErrorCountOrThrow();
+        }
+    } while (true);
+}
+
+void RTUMaster::increaseErrorCountOrThrow()
+{
+    m_error_count += 8;
+
     if (m_error_count > m_error_threshold) {
         throw;
     }
-    m_error_count += 8;
 }
 
 void RTUMaster::decreaseErrorCount()
@@ -154,11 +178,11 @@ void RTUMaster::readRegisters(uint16_t* values,
     uint8_t const* buffer_end =
         RTU::formatReadRegisters(buffer_start, address, input_registers, start, length);
 
-    writePacketAndReadReply(buffer_start,
+    writePacketAndReadReplyRegisters(buffer_start,
         buffer_end - buffer_start,
         m_frame,
-        input_registers ? FUNCTION_READ_INPUT_REGISTERS
-                        : FUNCTION_READ_HOLDING_REGISTERS);
+        input_registers ? FUNCTION_READ_INPUT_REGISTERS : FUNCTION_READ_HOLDING_REGISTERS,
+        length);
 
     common::parseReadRegisters(values, m_frame, length);
 }
