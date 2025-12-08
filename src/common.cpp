@@ -71,7 +71,7 @@ void common::validateReplyRegisters(Frame const& frame, uint8_t expected_size)
             "size differ (" +
             to_string(byte_count + 1u) + " != " + to_string(frame.payload.size()) + ")");
     }
-    else if (byte_count != (expected_size * 2)) {
+    else if (byte_count != expected_size * 2) {
         throw UnexpectedReply("reply does not contain as many "
                               "registers as was expected");
     }

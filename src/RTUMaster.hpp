@@ -53,15 +53,24 @@ namespace modbus {
         Frame m_frame;
 
         /** Error counter */
-        uint8_t m_error_count;
+        uint8_t m_error_count = 0;
+
+        /** Error increment value */
+        uint8_t m_error_increment;
 
         /** Error threshold before throwing */
         uint8_t m_error_threshold;
 
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
 
-        /** Increases the error count by 8 */
-        void increaseErrorCountOrThrow();
+        /** Increases the error count by m_error_increment
+         *  and returns a boolean for the comparison of the
+         *  current value and the threshold.
+         *
+         *  True means that the threshold has been reached and a
+         *  throw should be called.
+         */
+        bool increaseErrorCountAndValidate();
 
         /** Decreases the error count by 1 */
         void decreaseErrorCount();
@@ -75,7 +84,7 @@ namespace modbus {
             int bufsize,
             Frame& frame,
             int function,
-            uint8_t const& length);
+            uint8_t expected_length);
 
     public:
         RTUMaster();
@@ -94,6 +103,24 @@ namespace modbus {
         /** Get the expected interframe delay
          */
         base::Time getInterframeDelay() const;
+
+        /** Set the increment added to the error count by each error that
+         *  is retryable
+         *  @param [uint8_t] increment value
+        */
+        void setErrorIncrement(uint8_t const& increment);
+
+        /** Get the set error increment value */
+        uint8_t getErrorIncrement() const;
+
+        /** Set the threshold for the error count to throw */
+        void setErrorThreshold(uint8_t const& threshold);
+
+        /** Get the set error threshold value */
+        uint8_t getErrorThreshold() const;
+
+        /** Get the current error count */
+        uint8_t getErrorCount() const;
 
         /** Wait for one frame on the bus and read it
          */

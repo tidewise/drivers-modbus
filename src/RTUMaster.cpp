@@ -32,6 +32,31 @@ base::Time RTUMaster::getInterframeDelay() const
     return m_interframe_delay;
 }
 
+void RTUMaster::setErrorThreshold(uint8_t const& threshold)
+{
+    m_error_threshold = threshold;
+}
+
+uint8_t RTUMaster::getErrorThreshold() const
+{
+    return m_error_threshold;
+}
+
+void RTUMaster::setErrorIncrement(uint8_t const& increment)
+{
+    m_error_increment = increment;
+}
+
+uint8_t RTUMaster::getErrorIncrement() const
+{
+    return m_error_increment;
+}
+
+uint8_t RTUMaster::getErrorCount() const
+{
+    return m_error_count;
+}
+
 Frame RTUMaster::readFrame()
 {
     Frame result;
@@ -121,10 +146,14 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
             return;
         }
         catch (modbus::RTU::InvalidCRC const&) {
-            increaseErrorCountOrThrow();
+            if (increaseErrorCountAndValidate()) {
+                throw;
+            }
         }
         catch (UnexpectedReply const&) {
-            increaseErrorCountOrThrow();
+            if (increaseErrorCountAndValidate()) {
+                throw;
+            }
         }
     } while (true);
 }
@@ -133,32 +162,34 @@ void RTUMaster::writePacketAndReadReplyRegisters(uint8_t const* buffer,
     int bufsize,
     Frame& frame,
     int function,
-    uint8_t const& length)
+    uint8_t expected_length)
 {
     do {
         try {
             writePacket(buffer, bufsize);
             readReply(m_frame, function);
-            common::validateReplyRegisters(m_frame, length);
+            common::validateReplyRegisters(m_frame, expected_length);
             decreaseErrorCount();
             return;
         }
         catch (modbus::RTU::InvalidCRC const&) {
-            increaseErrorCountOrThrow();
+            if (increaseErrorCountAndValidate()) {
+                throw;
+            }
         }
         catch (UnexpectedReply const&) {
-            increaseErrorCountOrThrow();
+            if (increaseErrorCountAndValidate()) {
+                throw;
+            }
         }
     } while (true);
 }
 
-void RTUMaster::increaseErrorCountOrThrow()
+bool RTUMaster::increaseErrorCountAndValidate()
 {
-    m_error_count += 8;
+    m_error_count += m_error_increment;
 
-    if (m_error_count > m_error_threshold) {
-        throw;
-    }
+    return (m_error_count >= m_error_threshold);
 }
 
 void RTUMaster::decreaseErrorCount()
