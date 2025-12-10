@@ -56,10 +56,10 @@ namespace modbus {
         uint8_t m_error_count = 0;
 
         /** Error increment value */
-        uint8_t m_error_increment;
+        uint8_t m_error_increment = 1;
 
         /** Error threshold before throwing */
-        uint8_t m_error_threshold;
+        uint8_t m_error_threshold = 1;
 
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
 
@@ -89,6 +89,11 @@ namespace modbus {
     public:
         RTUMaster();
 
+        RTUMaster(uint8_t error_threshold, uint8_t error_increment);
+
+        /** Sets the initial config */
+        void setInitialConfig(int frame_max_size, int max_packet_size);
+
         /** Change the expected interframe delay
          *
          * When on serial lines, the interframe delay is specified by modbus as
@@ -106,18 +111,16 @@ namespace modbus {
 
         /** Set the increment added to the error count by each error that
          *  is retryable
+         *
          *  @param [uint8_t] increment value
-        */
+         */
         void setErrorIncrement(uint8_t const& increment);
 
-        /** Get the set error increment value */
-        uint8_t getErrorIncrement() const;
-
-        /** Set the threshold for the error count to throw */
+        /** Set the threshold for the error count to throw
+         *
+         *  @param [uint8_t] threshold value
+         */
         void setErrorThreshold(uint8_t const& threshold);
-
-        /** Get the set error threshold value */
-        uint8_t getErrorThreshold() const;
 
         /** Get the current error count */
         uint8_t getErrorCount() const;

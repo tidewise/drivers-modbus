@@ -109,12 +109,8 @@ TEST_F(RTUMasterTest, it_throws_if_receiving_an_unexpected_function_code_in_repl
     EXPECT_REPLY(vector<uint8_t>(request, request + 9),
         vector<uint8_t>(reply, reply + 5));
 
-<<<<<<< HEAD
-    ASSERT_THROW(driver.request(0x02, 0x10, vector<uint8_t>{1, 2, 3, 4, 5}),
-=======
     driver.setErrorThreshold(1);
     ASSERT_THROW(driver.request(0x02, 0x10, vector<uint8_t>{1, 2, 3, 4, 5}),
->>>>>>> feat: allow thresholds to be decided
         UnexpectedReply);
 }
 
@@ -161,6 +157,8 @@ TEST_F(RTUMasterTest, it_does_a_modbus_broadcast)
 TEST_F(RTUMasterTest, it_retries_on_CRC_error)
 {
     driver.openURI("test://");
+    driver.setErrorIncrement(1);
+    driver.setErrorThreshold(4);
 
     IODRIVERS_BASE_MOCK();
     EXPECT_REPLY(vector<uint8_t>{0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91},
@@ -168,18 +166,21 @@ TEST_F(RTUMasterTest, it_retries_on_CRC_error)
     EXPECT_REPLY(vector<uint8_t>{0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91},
         vector<uint8_t>{0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x07});
     EXPECT_REPLY(vector<uint8_t>{0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91},
+        vector<uint8_t>{0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x07});
+    EXPECT_REPLY(vector<uint8_t>{0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91},
         vector<uint8_t>{0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x06});
 
-    driver.setErrorThreshold(3);
     ASSERT_EQ((vector<uint16_t>{0x1234, 0x5678}),
         driver.readRegisters(0x10, false, 0xabcd, 2));
-    // It tries twice (+2) and then it succeeds once (-1)
-    ASSERT_EQ(1, driver.getErrorCount());
+    // It tries twice (+3) and then it succeeds once (-1)
+    ASSERT_EQ(2, driver.getErrorCount());
 }
 
 TEST_F(RTUMasterTest, it_accounts_for_invalid_data)
 {
     driver.openURI("test://");
+    driver.setErrorIncrement(1);
+    driver.setErrorThreshold(2);
 
     IODRIVERS_BASE_MOCK();
     EXPECT_REPLY(vector<uint8_t>{0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91},
@@ -193,12 +194,17 @@ TEST_F(RTUMasterTest, it_accounts_for_invalid_data)
 TEST_F(RTUMasterTest, it_throws_if_the_error_count_reaches_the_max_value)
 {
     driver.openURI("test://");
+    driver.setErrorIncrement(1);
+    driver.setErrorThreshold(3);
 
     IODRIVERS_BASE_MOCK();
     EXPECT_REPLY(vector<uint8_t>{0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91},
         vector<uint8_t>{0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x07});
+    EXPECT_REPLY(vector<uint8_t>{0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91},
+        vector<uint8_t>{0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x07});
+    EXPECT_REPLY(vector<uint8_t>{0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91},
+        vector<uint8_t>{0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x07});
 
-    driver.setErrorThreshold(1);
     ASSERT_THROW(driver.readRegisters(0x10, false, 0xabcd, 2), modbus::RTU::InvalidCRC);
 }
 
