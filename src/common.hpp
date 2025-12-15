@@ -19,7 +19,8 @@ namespace modbus {
             Frame const& frame,
             int length);
 
-        void validateReplyRegisters(Frame const& frame, uint8_t expected_size);
+        void validateReply(Frame const& frame,
+            uint8_t expected_size);
     };
 }
 

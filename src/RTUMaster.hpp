@@ -78,11 +78,6 @@ namespace modbus {
         void writePacketAndReadReply(uint8_t const* buffer,
             int bufsize,
             Frame& frame,
-            int function);
-
-        void writePacketAndReadReplyRegisters(uint8_t const* buffer,
-            int bufsize,
-            Frame& frame,
             int function,
             uint8_t expected_length);
 

@@ -3,6 +3,7 @@
 #include <modbus/Exceptions.hpp>
 #include <modbus/RTU.hpp>
 #include <modbus/common.hpp>
+#include <cmath>
 
 using namespace std;
 using namespace base;
@@ -89,7 +90,11 @@ Frame const& RTUMaster::request(int address, int function, vector<uint8_t> const
 {
     uint8_t* start = &m_write_buffer[0];
     uint8_t const* end = RTU::formatFrame(start, address, function, payload);
-    writePacketAndReadReply(&m_write_buffer[0], end - start, m_frame, function);
+    // This can receive any function and functions replies are different
+    // Couldn't find where this was used, need to double check
+    // I would remove this and always use the specific method for each function
+    writePacketAndReadReply(
+        &m_write_buffer[0], end - start, m_frame, function, payload.size());
     return m_frame;
 }
 
@@ -140,31 +145,6 @@ vector<uint16_t> RTUMaster::readRegisters(int address,
 void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
     int bufsize,
     Frame& frame,
-    int function)
-{
-    do {
-        try {
-            writePacket(buffer, bufsize);
-            readReply(m_frame, function);
-            decreaseErrorCount();
-            return;
-        }
-        catch (modbus::RTU::InvalidCRC const&) {
-            if (increaseErrorCountAndValidate()) {
-                throw;
-            }
-        }
-        catch (UnexpectedReply const&) {
-            if (increaseErrorCountAndValidate()) {
-                throw;
-            }
-        }
-    } while (true);
-}
-
-void RTUMaster::writePacketAndReadReplyRegisters(uint8_t const* buffer,
-    int bufsize,
-    Frame& frame,
     int function,
     uint8_t expected_length)
 {
@@ -172,7 +152,7 @@ void RTUMaster::writePacketAndReadReplyRegisters(uint8_t const* buffer,
         try {
             writePacket(buffer, bufsize);
             readReply(m_frame, function);
-            common::validateReplyRegisters(m_frame, expected_length);
+            common::validateReply(m_frame, expected_length);
             decreaseErrorCount();
             return;
         }
@@ -213,11 +193,13 @@ void RTUMaster::readRegisters(uint16_t* values,
     uint8_t const* buffer_end =
         RTU::formatReadRegisters(buffer_start, address, input_registers, start, length);
 
-    writePacketAndReadReplyRegisters(buffer_start,
+    // read registers have an extra byte equal to byte_count
+    auto expected_length = (length * 2) + 1;
+    writePacketAndReadReply(buffer_start,
         buffer_end - buffer_start,
         m_frame,
         input_registers ? FUNCTION_READ_INPUT_REGISTERS : FUNCTION_READ_HOLDING_REGISTERS,
-        length);
+        expected_length);
 
     common::parseReadRegisters(values, m_frame, length);
 }
@@ -237,7 +219,8 @@ void RTUMaster::writeSingleRegister(int address, uint16_t register_id, uint16_t 
     writePacketAndReadReply(buffer_start,
         buffer_end - buffer_start,
         m_frame,
-        FUNCTION_WRITE_SINGLE_REGISTER);
+        FUNCTION_WRITE_SINGLE_REGISTER,
+        2);
 }
 
 void RTUMaster::writeSingleCoil(int address, uint16_t register_id, bool value)
@@ -248,7 +231,8 @@ void RTUMaster::writeSingleCoil(int address, uint16_t register_id, bool value)
     writePacketAndReadReply(buffer_start,
         buffer_end - buffer_start,
         m_frame,
-        FUNCTION_WRITE_SINGLE_COIL);
+        FUNCTION_WRITE_SINGLE_COIL,
+        4);
 }
 
 std::vector<bool> RTUMaster::readDigitalInputs(int address,
@@ -261,7 +245,12 @@ std::vector<bool> RTUMaster::readDigitalInputs(int address,
         RTU::formatReadDigitalInputs(buffer_start, address, coils, register_id, count);
     auto function = coils ? FUNCTION_READ_COILS : FUNCTION_READ_DIGITAL_INPUTS;
 
-    writePacketAndReadReply(buffer_start, buffer_end - buffer_start, m_frame, function);
+    uint8_t byte_length = std::ceil(count / 8.0) + 1;
+    writePacketAndReadReply(buffer_start,
+        buffer_end - buffer_start,
+        m_frame,
+        function,
+        byte_length);
 
     std::vector<bool> values;
     common::parseReadDigitalInputs(values, m_frame, count);
