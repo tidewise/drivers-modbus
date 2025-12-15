@@ -86,18 +86,6 @@ void RTUMaster::readFrame(Frame& frame)
     }
 }
 
-Frame const& RTUMaster::request(int address, int function, vector<uint8_t> const& payload)
-{
-    uint8_t* start = &m_write_buffer[0];
-    uint8_t const* end = RTU::formatFrame(start, address, function, payload);
-    // This can receive any function and functions replies are different
-    // Couldn't find where this was used, need to double check
-    // I would remove this and always use the specific method for each function
-    writePacketAndReadReply(
-        &m_write_buffer[0], end - start, m_frame, function, payload.size());
-    return m_frame;
-}
-
 void RTUMaster::broadcast(int function, vector<uint8_t> const& payload)
 {
     uint8_t* start = &m_write_buffer[0];

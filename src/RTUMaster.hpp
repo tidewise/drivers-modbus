@@ -137,11 +137,6 @@ namespace modbus {
          */
         void readReply(Frame& frame, int function);
 
-        /** Send a request and wait for the slave's reply */
-        Frame const& request(int address,
-            int function,
-            std::vector<uint8_t> const& payload);
-
         /** Send a broadcast
          *
          * Does not wait for the turnaround delay

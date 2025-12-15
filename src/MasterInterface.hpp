@@ -28,11 +28,6 @@ namespace modbus {
          */
         virtual void readReply(Frame& frame, int function) = 0;
 
-        /** Send a request and wait for the slave's reply */
-        virtual Frame const& request(int address,
-            int function,
-            std::vector<uint8_t> const& payload) = 0;
-
         /** Read a set of registers */
         virtual std::vector<uint16_t> readRegisters(int address,
             bool input_registers,
