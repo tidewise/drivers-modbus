@@ -83,12 +83,7 @@ namespace modbus {
             uint8_t expected_length);
 
     public:
-        RTUMaster();
-
-        RTUMaster(uint8_t error_threshold, uint8_t error_increment);
-
-        /** Sets the initial config */
-        void setInitialConfig(int frame_max_size, int max_packet_size);
+        explicit RTUMaster(uint8_t error_threshold = 1, uint8_t error_increment = 1);
 
         /** Change the expected interframe delay
          *

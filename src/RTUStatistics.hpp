@@ -11,7 +11,7 @@ namespace modbus {
         double total_CRC_error_count = 0;
 
         /** Total UnexpectedReply error count */
-        double total_reply_error_count = 0;
+        double total_unexpected_reply_error_count = 0;
 
         /** Total Success count */
         double total_sucess_count = 0;

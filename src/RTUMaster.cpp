@@ -14,27 +14,16 @@ int RTUMaster::extractPacket(uint8_t const* buffer, size_t bufferSize) const
     throw std::logic_error("modbus::RTUMaster should be read only using readRaw");
 }
 
-RTUMaster::RTUMaster()
-    : iodrivers_base::Driver(RTU::FRAME_MAX_SIZE * 10)
-{
-    setInitialConfig(RTU::FRAME_MAX_SIZE, MAX_PACKET_SIZE);
-}
-
 RTUMaster::RTUMaster(uint8_t error_threshold, uint8_t error_increment)
     : iodrivers_base::Driver(RTU::FRAME_MAX_SIZE * 10)
 {
-    setInitialConfig(RTU::FRAME_MAX_SIZE, MAX_PACKET_SIZE);
+    setReadTimeout(base::Time::fromSeconds(1));
+    m_read_buffer.resize(MAX_PACKET_SIZE);
+    m_write_buffer.resize(MAX_PACKET_SIZE);
+    m_frame.payload.reserve(RTU::FRAME_MAX_SIZE);
 
     m_error_increment = error_increment;
     m_error_threshold = error_threshold;
-}
-
-void RTUMaster::setInitialConfig(int frame_max_size, int max_packet_size)
-{
-    setReadTimeout(base::Time::fromSeconds(1));
-    m_read_buffer.resize(max_packet_size);
-    m_write_buffer.resize(max_packet_size);
-    m_frame.payload.reserve(frame_max_size);
 }
 
 void RTUMaster::setInterframeDelay(base::Time const& delay)
@@ -151,7 +140,7 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
             }
         }
         catch (UnexpectedReply const&) {
-            m_statistics.total_reply_error_count++;
+            m_statistics.total_unexpected_reply_error_count++;
             if (increaseErrorCountAndValidate()) {
                 throw;
             }
@@ -239,7 +228,7 @@ std::vector<bool> RTUMaster::readDigitalInputs(int address,
         RTU::formatReadDigitalInputs(buffer_start, address, coils, register_id, count);
     auto function = coils ? FUNCTION_READ_COILS : FUNCTION_READ_DIGITAL_INPUTS;
 
-    uint8_t byte_length = std::ceil(count / 8.0) + 1;
+    uint8_t byte_length = (count + 7) / 8.0 + 1;
     writePacketAndReadReply(buffer_start,
         buffer_end - buffer_start,
         m_frame,
