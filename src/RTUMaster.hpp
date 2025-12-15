@@ -4,6 +4,7 @@
 #include <iodrivers_base/Driver.hpp>
 #include <modbus/Exceptions.hpp>
 #include <modbus/Frame.hpp>
+#include <modbus/RTUStatistics.hpp>
 #include <modbus/MasterInterface.hpp>
 
 namespace modbus {
@@ -52,8 +53,8 @@ namespace modbus {
          */
         Frame m_frame;
 
-        /** Error counter */
-        uint8_t m_error_count = 0;
+        /** RTU Statistics report */
+        RTUStatistics m_statistics;
 
         /** Error increment value */
         uint8_t m_error_increment = 1;
@@ -117,8 +118,8 @@ namespace modbus {
          */
         void setErrorThreshold(uint8_t const& threshold);
 
-        /** Get the current error count */
-        uint8_t getErrorCount() const;
+        /** Get the RTU Statistics */
+        RTUStatistics getRTUStats() const;
 
         /** Wait for one frame on the bus and read it
          */

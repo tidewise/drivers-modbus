@@ -57,9 +57,9 @@ void RTUMaster::setErrorIncrement(uint8_t const& increment)
     m_error_increment = increment;
 }
 
-uint8_t RTUMaster::getErrorCount() const
+RTUStatistics RTUMaster::getRTUStats() const
 {
-    return m_error_count;
+    return m_statistics;
 }
 
 Frame RTUMaster::readFrame()
@@ -157,11 +157,13 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
             return;
         }
         catch (modbus::RTU::InvalidCRC const&) {
+            m_statistics.total_CRC_error_count++;
             if (increaseErrorCountAndValidate()) {
                 throw;
             }
         }
         catch (UnexpectedReply const&) {
+            m_statistics.total_reply_error_count++;
             if (increaseErrorCountAndValidate()) {
                 throw;
             }
@@ -171,15 +173,17 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
 
 bool RTUMaster::increaseErrorCountAndValidate()
 {
-    m_error_count += m_error_increment;
+    m_statistics.error_count += m_error_increment;
+    m_statistics.timestamp = base::Time::now();
 
-    return (m_error_count >= m_error_threshold);
+    return (m_statistics.error_count >= m_error_threshold);
 }
 
 void RTUMaster::decreaseErrorCount()
 {
-    if (m_error_count > 0) {
-        m_error_count--;
+    if (m_statistics.error_count > 0) {
+        m_statistics.timestamp = base::Time::now();
+        m_statistics.error_count--;
     }
 }
 
