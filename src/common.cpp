@@ -1,4 +1,3 @@
-#include <cmath>
 #include <modbus/Exceptions.hpp>
 #include <modbus/common.hpp>
 

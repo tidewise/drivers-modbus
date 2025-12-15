@@ -1,6 +1,5 @@
 #include <modbus/RTUMaster.hpp>
 
-#include <cmath>
 #include <modbus/Exceptions.hpp>
 #include <modbus/RTU.hpp>
 #include <modbus/common.hpp>
@@ -228,7 +227,7 @@ std::vector<bool> RTUMaster::readDigitalInputs(int address,
         RTU::formatReadDigitalInputs(buffer_start, address, coils, register_id, count);
     auto function = coils ? FUNCTION_READ_COILS : FUNCTION_READ_DIGITAL_INPUTS;
 
-    uint8_t byte_length = (count + 7) / 8.0 + 1;
+    uint8_t byte_length = (count + 7) / 8 + 1;
     writePacketAndReadReply(buffer_start,
         buffer_end - buffer_start,
         m_frame,
