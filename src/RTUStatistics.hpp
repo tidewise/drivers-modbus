@@ -7,16 +7,19 @@
 
 namespace modbus {
     struct RTUStatistics {
-        /** CRC Error count*/
+        /** Total InvalidCRC error count */
         double total_CRC_error_count = 0;
 
-        /** Unexpected Reply */
+        /** Total UnexpectedReply error count */
         double total_reply_error_count = 0;
 
-        /** Unexpected Reply Error count */
+        /** Total Success count */
         double total_sucess_count = 0;
 
-        /** Error balance */
+        /** Error balance
+         *
+         * Each sucess decreases 1 and each failure increases by the defined
+         * increment per error */
         uint8_t error_count = 0;
 
         /** Time of the last update*/

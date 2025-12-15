@@ -1,9 +1,9 @@
 #include <modbus/RTUMaster.hpp>
 
+#include <cmath>
 #include <modbus/Exceptions.hpp>
 #include <modbus/RTU.hpp>
 #include <modbus/common.hpp>
-#include <cmath>
 
 using namespace std;
 using namespace base;
@@ -169,8 +169,10 @@ bool RTUMaster::increaseErrorCountAndValidate()
 
 void RTUMaster::decreaseErrorCount()
 {
+    m_statistics.total_sucess_count++;
+    m_statistics.timestamp = base::Time::now();
+
     if (m_statistics.error_count > 0) {
-        m_statistics.timestamp = base::Time::now();
         m_statistics.error_count--;
     }
 }

@@ -112,8 +112,77 @@ TEST_F(RTUMasterTest, it_retries_on_CRC_error)
     ASSERT_EQ((vector<uint16_t>{0x1234, 0x5678}),
         driver.readRegisters(0x10, false, 0xabcd, 2));
     auto statistics = driver.getRTUStats();
-    // It tries twice (+3) and then it succeeds once (-1)
+    // It tries thrice (+3) and then it succeeds once (-1)
     ASSERT_EQ(2, statistics.error_count);
+    ASSERT_EQ(3, statistics.total_CRC_error_count);
+    ASSERT_EQ(0, statistics.total_reply_error_count);
+    ASSERT_EQ(1, statistics.total_sucess_count);
+}
+
+TEST_F(RTUMasterTest, it_retries_on_unexpected_reply_function) {
+    driver.openURI("test://");
+    driver.setErrorIncrement(3);
+    driver.setErrorThreshold(12);
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x04, 0x4, 0x12, 0x34, 0x56, 0x78, 0x81, 0xb1 }
+    );
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x04, 0x4, 0x12, 0x34, 0x56, 0x78, 0x81, 0xb1 }
+    );
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x04, 0x4, 0x12, 0x34, 0x56, 0x78, 0x81, 0xb1 }
+    );
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x06 }
+    );
+
+    ASSERT_EQ((vector<uint16_t>{ 0x1234, 0x5678 }),
+              driver.readRegisters(0x10, false, 0xabcd, 2));
+    auto statistics = driver.getRTUStats();
+    // It tries thrice (+9) and then it succeeds once (-1)
+    ASSERT_EQ(8, statistics.error_count);
+    ASSERT_EQ(0, statistics.total_CRC_error_count);
+    ASSERT_EQ(3, statistics.total_reply_error_count);
+    ASSERT_EQ(1, statistics.total_sucess_count);
+}
+
+TEST_F(RTUMasterTest, it_retries_on_unexpected_reply_length) {
+    driver.openURI("test://");
+    driver.setErrorIncrement(3);
+    driver.setErrorThreshold(12);
+
+    IODRIVERS_BASE_MOCK();
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x77, 0x47, 0x86 }
+    );
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x77, 0x47, 0x86 }
+    );
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x77, 0x47, 0x86 }
+    );
+    EXPECT_REPLY(
+        vector<uint8_t>{ 0x10, 0x03, 0xab, 0xcd, 0x00, 0x02, 0x76, 0x91 },
+        vector<uint8_t>{ 0x10, 0x03, 0x4, 0x12, 0x34, 0x56, 0x78, 0x80, 0x06 }
+    );
+
+    ASSERT_EQ((vector<uint16_t>{ 0x1234, 0x5678 }),
+              driver.readRegisters(0x10, false, 0xabcd, 2));
+    auto statistics = driver.getRTUStats();
+    // It tries thrice (+9) and then it succeeds once (-1)
+    ASSERT_EQ(8, statistics.error_count);
+    ASSERT_EQ(0, statistics.total_CRC_error_count);
+    ASSERT_EQ(3, statistics.total_reply_error_count);
+    ASSERT_EQ(1, statistics.total_sucess_count);
 }
 
 TEST_F(RTUMasterTest, it_accounts_for_invalid_data)

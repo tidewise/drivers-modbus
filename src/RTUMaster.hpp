@@ -4,8 +4,8 @@
 #include <iodrivers_base/Driver.hpp>
 #include <modbus/Exceptions.hpp>
 #include <modbus/Frame.hpp>
-#include <modbus/RTUStatistics.hpp>
 #include <modbus/MasterInterface.hpp>
+#include <modbus/RTUStatistics.hpp>
 
 namespace modbus {
     /**
