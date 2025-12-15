@@ -7,7 +7,8 @@
 using namespace std;
 using namespace modbus;
 
-void usage(ostream& stream) {
+void usage(ostream& stream)
+{
     stream << "usage: modbus_ctl URI [PROTOCOL] CMD\n"
            << "where URI is a iodrivers_base URI\n"
            << "      PROTOCOL is either rtu or tcp. It may be omitted, in which\n"
@@ -79,9 +80,8 @@ int main(int argc, char** argv)
 
         size_t length = args.empty() ? 1 : std::stoi(args.front());
         bool input = cmd == "read-input";
-        auto result = modbus_master->readRegisters(
-            address, input, start_register, length
-        );
+        auto result =
+            modbus_master->readRegisters(address, input, start_register, length);
 
         for (size_t i = 0; i < length; ++i) {
             std::cout << dec << start_register + i << ": " << result[i] << std::endl;
@@ -106,9 +106,8 @@ int main(int argc, char** argv)
 
         size_t length = args.empty() ? 1 : std::stoi(args.front());
         bool coil = cmd == "read-coil";
-        auto result = modbus_master->readDigitalInputs(
-            address, coil, start_input, length
-        );
+        auto result =
+            modbus_master->readDigitalInputs(address, coil, start_input, length);
 
         for (size_t i = 0; i < length; ++i) {
             std::cout << dec << start_input + i << ": " << result[i] << std::endl;

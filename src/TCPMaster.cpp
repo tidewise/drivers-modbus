@@ -1,14 +1,15 @@
 #include <modbus/TCPMaster.hpp>
 
-#include <modbus/common.hpp>
 #include <modbus/Exceptions.hpp>
 #include <modbus/TCP.hpp>
+#include <modbus/common.hpp>
 
 using namespace std;
 using namespace base;
 using namespace modbus;
 
-int TCPMaster::extractPacket(uint8_t const* buffer, size_t bufferSize) const {
+int TCPMaster::extractPacket(uint8_t const* buffer, size_t bufferSize) const
+{
     if (bufferSize < 4) {
         return 0;
     }
@@ -36,48 +37,54 @@ int TCPMaster::extractPacket(uint8_t const* buffer, size_t bufferSize) const {
 }
 
 TCPMaster::TCPMaster(uint16_t max_payload_size)
-    : iodrivers_base::Driver((TCP::FRAME_OVERHEAD_SIZE + max_payload_size) * 10) {
+    : iodrivers_base::Driver((TCP::FRAME_OVERHEAD_SIZE + max_payload_size) * 10)
+{
     setReadTimeout(base::Time::fromSeconds(1));
     m_read_buffer.resize(MAX_PACKET_SIZE);
     m_write_buffer.resize(MAX_PACKET_SIZE);
     m_frame.payload.reserve(max_payload_size);
 }
 
-uint16_t TCPMaster::allocateTransactionID() {
+uint16_t TCPMaster::allocateTransactionID()
+{
     uint8_t lsb = m_transaction_id;
     ++lsb;
     return 0xAA00 | lsb;
 }
 
-Frame TCPMaster::readFrame() {
+Frame TCPMaster::readFrame()
+{
     Frame result;
     readFrame(result);
     return result;
 }
 
-void TCPMaster::readFrame(Frame& frame) {
+void TCPMaster::readFrame(Frame& frame)
+{
     int c = readPacket(&m_read_buffer[0], m_read_buffer.size());
     TCP::parseFrame(frame, m_transaction_id, &m_read_buffer[0], &m_read_buffer[c]);
 }
 
-Frame const& TCPMaster::request(int address, int function, vector<uint8_t> const& payload) {
+Frame const& TCPMaster::request(int address, int function, vector<uint8_t> const& payload)
+{
     uint8_t* start = &m_write_buffer[0];
     m_transaction_id = allocateTransactionID();
-    uint8_t const* end = TCP::formatFrame(
-        start, m_transaction_id, address, function, payload
-    );
+    uint8_t const* end =
+        TCP::formatFrame(start, m_transaction_id, address, function, payload);
     writePacket(&m_write_buffer[0], end - start);
     readReply(m_frame, function);
     return m_frame;
 }
 
-Frame TCPMaster::readReply(int function) {
+Frame TCPMaster::readReply(int function)
+{
     Frame frame;
     readReply(frame, function);
     return frame;
 }
 
-void TCPMaster::readReply(Frame& frame, int function) {
+void TCPMaster::readReply(Frame& frame, int function)
+{
     readFrame(frame);
     if (frame.function == function) {
         return;
@@ -95,60 +102,85 @@ void TCPMaster::readReply(Frame& frame, int function) {
     }
 }
 
-vector<uint16_t> TCPMaster::readRegisters(
-    int address, bool input_registers, int start, int length) {
+vector<uint16_t> TCPMaster::readRegisters(int address,
+    bool input_registers,
+    int start,
+    int length)
+{
     vector<uint16_t> registers;
     registers.resize(length);
     readRegisters(&registers[0], address, input_registers, start, length);
     return registers;
 }
 
-void TCPMaster::readRegisters(
-    uint16_t* values, int address, bool input_registers, int start, int length) {
+void TCPMaster::readRegisters(uint16_t* values,
+    int address,
+    bool input_registers,
+    int start,
+    int length)
+{
     uint8_t* buffer_start = &m_write_buffer[0];
     m_transaction_id = allocateTransactionID();
-    uint8_t const* buffer_end = TCP::formatReadRegisters(
-        buffer_start, m_transaction_id, address, input_registers, start, length
-    );
+    uint8_t const* buffer_end = TCP::formatReadRegisters(buffer_start,
+        m_transaction_id,
+        address,
+        input_registers,
+        start,
+        length);
     writePacket(buffer_start, buffer_end - buffer_start);
-    readReply(m_frame, input_registers ? FUNCTION_READ_INPUT_REGISTERS :
-                                         FUNCTION_READ_HOLDING_REGISTERS);
+    readReply(m_frame,
+        input_registers ? FUNCTION_READ_INPUT_REGISTERS
+                        : FUNCTION_READ_HOLDING_REGISTERS);
 
     common::parseReadRegisters(values, m_frame, length);
 }
 
-uint16_t TCPMaster::readSingleRegister(int address, bool input_registers, int register_id) {
+uint16_t TCPMaster::readSingleRegister(int address, bool input_registers, int register_id)
+{
     uint16_t value;
     readRegisters(&value, address, input_registers, register_id, 1);
     return value;
 }
 
-void TCPMaster::writeSingleRegister(int address, uint16_t register_id, uint16_t value) {
+void TCPMaster::writeSingleRegister(int address, uint16_t register_id, uint16_t value)
+{
     uint8_t* buffer_start = &m_write_buffer[0];
     m_transaction_id = allocateTransactionID();
-    uint8_t const* buffer_end = TCP::formatWriteRegister(
-        buffer_start, m_transaction_id, address, register_id, value
-    );
+    uint8_t const* buffer_end = TCP::formatWriteRegister(buffer_start,
+        m_transaction_id,
+        address,
+        register_id,
+        value);
     writePacket(buffer_start, buffer_end - buffer_start);
     readReply(m_frame, FUNCTION_WRITE_SINGLE_REGISTER);
 }
 
-void TCPMaster::writeSingleCoil(int address, uint16_t register_id, bool value) {
+void TCPMaster::writeSingleCoil(int address, uint16_t register_id, bool value)
+{
     uint8_t* buffer_start = &m_write_buffer[0];
     m_transaction_id = allocateTransactionID();
-    uint8_t const* buffer_end = TCP::formatWriteSingleCoil(
-        buffer_start, m_transaction_id, address, register_id, value
-    );
+    uint8_t const* buffer_end = TCP::formatWriteSingleCoil(buffer_start,
+        m_transaction_id,
+        address,
+        register_id,
+        value);
     writePacket(buffer_start, buffer_end - buffer_start);
     readReply(m_frame, FUNCTION_WRITE_SINGLE_COIL);
 }
 
-std::vector<bool> TCPMaster::readDigitalInputs(int address, bool coils, uint16_t register_id, uint16_t count) {
+std::vector<bool> TCPMaster::readDigitalInputs(int address,
+    bool coils,
+    uint16_t register_id,
+    uint16_t count)
+{
     uint8_t* buffer_start = &m_write_buffer[0];
     m_transaction_id = allocateTransactionID();
-    uint8_t const* buffer_end = TCP::formatReadDigitalInputs(
-        buffer_start, m_transaction_id, address, coils, register_id, count
-    );
+    uint8_t const* buffer_end = TCP::formatReadDigitalInputs(buffer_start,
+        m_transaction_id,
+        address,
+        coils,
+        register_id,
+        count);
     writePacket(buffer_start, buffer_end - buffer_start);
 
     auto function = coils ? FUNCTION_READ_COILS : FUNCTION_READ_DIGITAL_INPUTS;

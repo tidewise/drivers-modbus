@@ -2,8 +2,8 @@
 #define MODBUS_TCP_MASTER_HPP
 
 #include <iodrivers_base/Driver.hpp>
-#include <modbus/Frame.hpp>
 #include <modbus/Exceptions.hpp>
+#include <modbus/Frame.hpp>
 #include <modbus/MasterInterface.hpp>
 
 namespace modbus {
@@ -57,20 +57,22 @@ namespace modbus {
         void readReply(Frame& frame, int function);
 
         /** Send a request and wait for the slave's reply */
-        Frame const& request(
-            int address, int function, std::vector<uint8_t> const& payload
-        );
+        Frame const& request(int address,
+            int function,
+            std::vector<uint8_t> const& payload);
 
         /** Read a set of registers */
-        std::vector<uint16_t> readRegisters(
-            int address, bool input_registers, int start, int length
-        );
+        std::vector<uint16_t> readRegisters(int address,
+            bool input_registers,
+            int start,
+            int length);
 
         /** Read a set of registers */
-        void readRegisters(
-            uint16_t* values,
-            int address, bool input_registers, int start, int length
-        );
+        void readRegisters(uint16_t* values,
+            int address,
+            bool input_registers,
+            int start,
+            int length);
 
         uint16_t readSingleRegister(int address, bool input_registers, int register_id);
 
@@ -78,7 +80,10 @@ namespace modbus {
 
         void writeSingleCoil(int address, uint16_t register_id, bool value);
 
-        std::vector<bool> readDigitalInputs(int address, bool coils, uint16_t register_id, uint16_t count);
+        std::vector<bool> readDigitalInputs(int address,
+            bool coils,
+            uint16_t register_id,
+            uint16_t count);
     };
 }
 

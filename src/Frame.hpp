@@ -1,8 +1,8 @@
 #ifndef MODBUS_FRAME_HPP
 #define MODBUS_FRAME_HPP
 
-#include <vector>
 #include <cstdint>
+#include <vector>
 
 namespace modbus {
     /**

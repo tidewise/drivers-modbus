@@ -1,8 +1,8 @@
 #ifndef MODBUS_EXCEPTIONS_HPP
 #define MODBUS_EXCEPTIONS_HPP
 
-#include <string>
 #include <stdexcept>
+#include <string>
 
 namespace modbus {
     /** Exception thrown when a slave replies to a request with an exception
@@ -11,10 +11,9 @@ namespace modbus {
         int function_code;
         int exception_code;
 
-        RequestException(
-            int function_code, int exception_code,
-            std::string const& message = "received exception in reply to a request"
-        );
+        RequestException(int function_code,
+            int exception_code,
+            std::string const& message = "received exception in reply to a request");
     };
 
     /** Exception thrown when a reply does not have the expected function code
