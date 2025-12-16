@@ -202,7 +202,7 @@ void RTUMaster::writeSingleRegister(int address, uint16_t register_id, uint16_t 
         buffer_end - buffer_start,
         m_frame,
         FUNCTION_WRITE_SINGLE_REGISTER,
-        2);
+        4);
 }
 
 void RTUMaster::writeSingleCoil(int address, uint16_t register_id, bool value)
