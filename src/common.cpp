@@ -20,7 +20,12 @@ uint8_t const* common::parse16(uint8_t const* buffer, uint16_t& value)
 
 void common::parseReadRegisters(uint16_t* values, Frame const& frame, int length)
 {
-    validateReply(frame, (length * 2) + 1);
+    // This is the packet length in bytes corresponding to the data
+    // (2 bytes: High and Low): data_length (in bytes) + 1 (for `byte_count`)
+    uint8_t data_length = (length * 2);
+    validateByteCount(frame, data_length);
+    uint8_t packet_length = data_length + 1;
+    validateReply(frame, packet_length);
 
     for (int i = 0; i < length; ++i) {
         parse16(&frame.payload[1 + i * 2], values[i]);
@@ -31,9 +36,12 @@ void common::parseReadDigitalInputs(std::vector<bool>& values,
     Frame const& frame,
     int length)
 {
-    // This is the ammount of bytes needed to send values + 1 for `byte_count`
-    uint8_t byte_length = (length + 7) / 8 + 1;
-    validateReply(frame, byte_length);
+    // This is the length in bytes from the conversion bits to bytes 1 bit for each input:
+    // data_length (in bytes) + 1 (for `byte_count`)
+    uint8_t data_length = (length + 7) / 8;
+    validateByteCount(frame, data_length);
+    uint8_t packet_length = data_length + 1;
+    validateReply(frame, packet_length);
 
     int i = 1;
     int shift = 0;
@@ -53,5 +61,14 @@ void common::validateReply(Frame const& frame, uint8_t expected_size)
                               "bytes as was expected. payload size != expected size: " +
                               to_string(frame.payload.size()) +
                               " != " + to_string(expected_size));
+    }
+}
+
+void common::validateByteCount(Frame const& frame, uint8_t expected_size)
+{
+    uint8_t byte_count = frame.payload[0];
+    if (expected_size != byte_count) {
+        throw UnexpectedReply(
+            "reply byte count does not contain as many bytes as was expected");
     }
 }

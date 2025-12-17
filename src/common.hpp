@@ -21,6 +21,9 @@ namespace modbus {
 
         void validateReply(Frame const& frame,
             uint8_t expected_size);
+
+        void validateByteCount(Frame const& frame,
+            uint8_t expected_size);
     };
 }
 
