@@ -21,7 +21,6 @@ uint8_t const* common::parse16(uint8_t const* buffer, uint16_t& value)
 void common::parseReadRegisters(uint16_t* values, Frame const& frame, int length)
 {
     validateReply(frame, (length * 2) + 1);
-    uint8_t byte_count = frame.payload[0];
 
     for (int i = 0; i < length; ++i) {
         parse16(&frame.payload[1 + i * 2], values[i]);
