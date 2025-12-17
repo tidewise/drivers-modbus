@@ -24,14 +24,19 @@ namespace modbus {
         /** @overload
          */
         uint8_t* formatFrame(uint8_t* buffer,
-                             uint16_t transactionID, int address, int functionID,
-                             std::vector<uint8_t> const& payload);
+            uint16_t transactionID,
+            int address,
+            int functionID,
+            std::vector<uint8_t> const& payload);
 
         /** Fill a byte buffer with a valid RTU frame (incl. CRC)
          */
         uint8_t* formatFrame(uint8_t* buffer,
-                             uint16_t transactionID, int address, int functionID,
-                             uint8_t const* payloadStart, uint8_t const* payloadEnd);
+            uint16_t transactionID,
+            int address,
+            int functionID,
+            uint8_t const* payloadStart,
+            uint8_t const* payloadEnd);
 
         /**
          * Exception thrown when the transaction ID received in a frame does not
@@ -54,13 +59,16 @@ namespace modbus {
          * @throw InvalidCRC if the buffer does not contain a valid frame
          */
         Frame parseFrame(uint16_t transactionID,
-                         uint8_t const* start, uint8_t const* end);
+            uint8_t const* start,
+            uint8_t const* end);
 
         /** @overload parseFrame version that allows the use of a preallocated
          *      payload
          */
         void parseFrame(Frame& frame,
-                        uint16_t transactionID, uint8_t const* start, uint8_t const* end);
+            uint16_t transactionID,
+            uint8_t const* start,
+            uint8_t const* end);
 
         /** Fill a byte buffer with a request to read registers
          *
@@ -68,37 +76,42 @@ namespace modbus {
          * @arg the start register
          * @arg length the number of registers to read
          */
-        uint8_t* formatReadRegisters(
-            uint8_t* buffer,
-            uint16_t transactionID, uint8_t address,
-            bool input_registers, uint16_t start, uint8_t length
-        );
+        uint8_t* formatReadRegisters(uint8_t* buffer,
+            uint16_t transactionID,
+            uint8_t address,
+            bool input_registers,
+            uint16_t start,
+            uint8_t length);
 
         /** Fill a byte buffer with a request to write a single register
          *
          * @arg the register
          * @arg the register value
          */
-        uint8_t* formatWriteRegister(
-            uint8_t* buffer, uint16_t transactionID, uint8_t address,
-            uint16_t register_id, uint16_t value
-        );
+        uint8_t* formatWriteRegister(uint8_t* buffer,
+            uint16_t transactionID,
+            uint8_t address,
+            uint16_t register_id,
+            uint16_t value);
 
         /** Fill a byte buffer with a request to read multiple coils or digital inputs */
-        uint8_t* formatReadDigitalInputs(
-            uint8_t* buffer, uint16_t transactionID, uint8_t address,
-            bool coils, uint16_t register_id, int count
-        );
+        uint8_t* formatReadDigitalInputs(uint8_t* buffer,
+            uint16_t transactionID,
+            uint8_t address,
+            bool coils,
+            uint16_t register_id,
+            int count);
 
         /** Fill a byte buffer with a request to write a coil
          *
          * @arg the register
          * @arg the coil value
          */
-        uint8_t* formatWriteSingleCoil(
-            uint8_t* buffer, uint16_t transactionID, uint8_t address,
-            uint16_t register_id, bool value
-        );
+        uint8_t* formatWriteSingleCoil(uint8_t* buffer,
+            uint16_t transactionID,
+            uint8_t address,
+            uint16_t register_id,
+            bool value);
     }
 }
 
