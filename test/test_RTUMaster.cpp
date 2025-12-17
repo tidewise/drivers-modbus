@@ -114,7 +114,7 @@ TEST_F(RTUMasterTest, it_retries_on_CRC_error)
     auto statistics = driver.getRTUStats();
     // It tries thrice (+3) and then it succeeds once (-1)
     ASSERT_EQ(2, statistics.error_count);
-    ASSERT_EQ(3, statistics.total_CRC_error_count);
+    ASSERT_EQ(3, statistics.total_crc_error_count);
     ASSERT_EQ(0, statistics.total_unexpected_reply_error_count);
     ASSERT_EQ(1, statistics.total_sucess_count);
 }
@@ -140,7 +140,7 @@ TEST_F(RTUMasterTest, it_retries_on_unexpected_reply_function)
     auto statistics = driver.getRTUStats();
     // It tries thrice (+9) and then it succeeds once (-1)
     ASSERT_EQ(8, statistics.error_count);
-    ASSERT_EQ(0, statistics.total_CRC_error_count);
+    ASSERT_EQ(0, statistics.total_crc_error_count);
     ASSERT_EQ(3, statistics.total_unexpected_reply_error_count);
     ASSERT_EQ(1, statistics.total_sucess_count);
 }
@@ -166,7 +166,7 @@ TEST_F(RTUMasterTest, it_retries_on_unexpected_reply_length)
     auto statistics = driver.getRTUStats();
     // It tries thrice (+9) and then it succeeds once (-1)
     ASSERT_EQ(8, statistics.error_count);
-    ASSERT_EQ(0, statistics.total_CRC_error_count);
+    ASSERT_EQ(0, statistics.total_crc_error_count);
     ASSERT_EQ(3, statistics.total_unexpected_reply_error_count);
     ASSERT_EQ(1, statistics.total_sucess_count);
 }

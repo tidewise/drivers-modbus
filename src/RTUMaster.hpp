@@ -105,13 +105,13 @@ namespace modbus {
          *
          *  @param [uint8_t] increment value
          */
-        void setErrorIncrement(uint8_t const& increment);
+        void setErrorIncrement(uint8_t increment);
 
         /** Set the threshold for the error count to throw
          *
          *  @param [uint8_t] threshold value
          */
-        void setErrorThreshold(uint8_t const& threshold);
+        void setErrorThreshold(uint8_t threshold);
 
         /** Get the RTU Statistics */
         RTUStatistics getRTUStats() const;

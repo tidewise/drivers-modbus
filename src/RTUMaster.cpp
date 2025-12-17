@@ -15,14 +15,13 @@ int RTUMaster::extractPacket(uint8_t const* buffer, size_t bufferSize) const
 
 RTUMaster::RTUMaster(uint8_t error_threshold, uint8_t error_increment)
     : iodrivers_base::Driver(RTU::FRAME_MAX_SIZE * 10)
+    , m_error_increment(error_increment)
+    , m_error_threshold(error_threshold)
 {
     setReadTimeout(base::Time::fromSeconds(1));
     m_read_buffer.resize(MAX_PACKET_SIZE);
     m_write_buffer.resize(MAX_PACKET_SIZE);
     m_frame.payload.reserve(RTU::FRAME_MAX_SIZE);
-
-    m_error_increment = error_increment;
-    m_error_threshold = error_threshold;
 }
 
 void RTUMaster::setInterframeDelay(base::Time const& delay)
@@ -35,12 +34,12 @@ base::Time RTUMaster::getInterframeDelay() const
     return m_interframe_delay;
 }
 
-void RTUMaster::setErrorThreshold(uint8_t const& threshold)
+void RTUMaster::setErrorThreshold(uint8_t threshold)
 {
     m_error_threshold = threshold;
 }
 
-void RTUMaster::setErrorIncrement(uint8_t const& increment)
+void RTUMaster::setErrorIncrement(uint8_t increment)
 {
     m_error_increment = increment;
 }
@@ -133,7 +132,7 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
             return;
         }
         catch (modbus::RTU::InvalidCRC const&) {
-            m_statistics.total_CRC_error_count++;
+            m_statistics.total_crc_error_count++;
             if (increaseErrorCountAndValidate()) {
                 throw;
             }
@@ -150,7 +149,7 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
 bool RTUMaster::increaseErrorCountAndValidate()
 {
     m_statistics.error_count += m_error_increment;
-    m_statistics.timestamp = base::Time::now();
+    m_statistics.time = base::Time::now();
 
     return (m_statistics.error_count >= m_error_threshold);
 }
@@ -158,7 +157,7 @@ bool RTUMaster::increaseErrorCountAndValidate()
 void RTUMaster::decreaseErrorCount()
 {
     m_statistics.total_sucess_count++;
-    m_statistics.timestamp = base::Time::now();
+    m_statistics.time = base::Time::now();
 
     if (m_statistics.error_count > 0) {
         m_statistics.error_count--;
