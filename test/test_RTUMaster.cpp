@@ -116,7 +116,7 @@ TEST_F(RTUMasterTest, it_retries_on_CRC_error)
     ASSERT_EQ(2, statistics.error_count);
     ASSERT_EQ(3, statistics.total_crc_error_count);
     ASSERT_EQ(0, statistics.total_unexpected_reply_error_count);
-    ASSERT_EQ(1, statistics.total_sucess_count);
+    ASSERT_EQ(1, statistics.total_success_count);
 }
 
 TEST_F(RTUMasterTest, it_retries_on_unexpected_reply_function)
@@ -142,7 +142,7 @@ TEST_F(RTUMasterTest, it_retries_on_unexpected_reply_function)
     ASSERT_EQ(8, statistics.error_count);
     ASSERT_EQ(0, statistics.total_crc_error_count);
     ASSERT_EQ(3, statistics.total_unexpected_reply_error_count);
-    ASSERT_EQ(1, statistics.total_sucess_count);
+    ASSERT_EQ(1, statistics.total_success_count);
 }
 
 TEST_F(RTUMasterTest, it_retries_on_unexpected_reply_length)
@@ -168,7 +168,7 @@ TEST_F(RTUMasterTest, it_retries_on_unexpected_reply_length)
     ASSERT_EQ(8, statistics.error_count);
     ASSERT_EQ(0, statistics.total_crc_error_count);
     ASSERT_EQ(3, statistics.total_unexpected_reply_error_count);
-    ASSERT_EQ(1, statistics.total_sucess_count);
+    ASSERT_EQ(1, statistics.total_success_count);
 }
 
 TEST_F(RTUMasterTest, it_accounts_for_invalid_data)

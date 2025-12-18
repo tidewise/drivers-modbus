@@ -156,7 +156,7 @@ bool RTUMaster::increaseErrorCountAndValidate()
 
 void RTUMaster::decreaseErrorCount()
 {
-    m_statistics.total_sucess_count++;
+    m_statistics.total_success_count++;
     m_statistics.time = base::Time::now();
 
     if (m_statistics.error_count > 0) {

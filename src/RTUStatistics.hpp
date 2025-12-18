@@ -7,24 +7,26 @@
 
 namespace modbus {
     struct RTUStatistics {
+        /** Time of the last update
+         *
+         * @meta role logical_time
+         */
+        base::Time time;
+
         // Total InvalidCRC error count
-        int total_crc_error_count = 0;
+        uint32_t total_crc_error_count = 0;
 
         // Total UnexpectedReply error count
-        int total_unexpected_reply_error_count = 0;
+        uint32_t total_unexpected_reply_error_count = 0;
 
         // Total Success count
-        int total_sucess_count = 0;
+        uint64_t total_success_count = 0;
 
         /** Error balance
          *
-         * Each sucess decreases 1 and each failure increases by the defined
+         * Each success decreases 1 and each failure increases by the defined
          * increment per error */
         uint8_t error_count = 0;
-
-        // Time of the last update
-        // @meta role logical_time
-        base::Time time;
     };
 }
 
