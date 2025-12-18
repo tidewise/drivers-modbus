@@ -53,13 +53,13 @@ namespace modbus {
          */
         Frame m_frame;
 
-        /** RTU Statistics report */
+        /** Statistics regarding errors and success for ModbusRTU requests */
         RTUStatistics m_statistics;
 
-        /** Error increment value */
+        /** Value used for to increment error count upon an error */
         uint8_t m_error_increment = 1;
 
-        /** Error threshold before throwing */
+        /** Maximum error count value before throwing  */
         uint8_t m_error_threshold = 1;
 
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
@@ -76,6 +76,17 @@ namespace modbus {
         /** Decreases the error count by 1 */
         void decreaseErrorCount();
 
+        /** Write an request and validates the response
+         *
+         *  The responses are validated and increase error count if they
+         *  are invalid, upon reaching the threshold it throws.
+         *
+         *  @param buffer [uint8_t]
+         *  @param bufsize [int] the size of the buffer
+         *  @param frame [Frame] the frame used to write the message
+         *  @param function [int] the function of the action we want to execute
+         *  @param expected_length [uint8_t] the expected length of the response data
+         */
         void writePacketAndReadReply(uint8_t const* buffer,
             int bufsize,
             Frame& frame,
@@ -107,7 +118,7 @@ namespace modbus {
          */
         void setErrorIncrement(uint8_t increment);
 
-        /** Set the threshold for the error count to throw
+        /** Set the maximum value before throwing
          *
          *  @param [uint8_t] threshold value
          */
