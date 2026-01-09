@@ -65,17 +65,6 @@ void TCPMaster::readFrame(Frame& frame)
     TCP::parseFrame(frame, m_transaction_id, &m_read_buffer[0], &m_read_buffer[c]);
 }
 
-Frame const& TCPMaster::request(int address, int function, vector<uint8_t> const& payload)
-{
-    uint8_t* start = &m_write_buffer[0];
-    m_transaction_id = allocateTransactionID();
-    uint8_t const* end =
-        TCP::formatFrame(start, m_transaction_id, address, function, payload);
-    writePacket(&m_write_buffer[0], end - start);
-    readReply(m_frame, function);
-    return m_frame;
-}
-
 Frame TCPMaster::readReply(int function)
 {
     Frame frame;

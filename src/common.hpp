@@ -19,6 +19,12 @@ namespace modbus {
             Frame const& frame,
             int length);
 
+        /** Validates that the data payload size matches its expected size */
+        void validateReply(Frame const& frame, uint8_t expected_size);
+
+        /** Validates that the value of the byte count enclapsulated on the data payload
+         *  matches the expected size */
+        void validateByteCount(Frame const& frame, uint8_t expected_size);
     };
 }
 

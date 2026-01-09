@@ -5,6 +5,7 @@
 #include <modbus/Exceptions.hpp>
 #include <modbus/Frame.hpp>
 #include <modbus/MasterInterface.hpp>
+#include <modbus/RTUStatistics.hpp>
 
 namespace modbus {
     /**
@@ -52,15 +53,48 @@ namespace modbus {
          */
         Frame m_frame;
 
+        /** Statistics regarding errors and success for ModbusRTU requests */
+        RTUStatistics m_statistics;
+
+        /** Value used for to increment error count upon an error */
+        uint8_t m_error_increment = 1;
+
+        /** Maximum error count value before throwing  */
+        uint8_t m_error_threshold = 1;
+
         static const int FUNCTION_CODE_EXCEPTION = 0x80;
 
+        /** Increases the error count by m_error_increment
+         *  and returns a boolean for the comparison of the
+         *  current value and the threshold.
+         *
+         *  True means that the threshold has been reached and a
+         *  throw should be called.
+         */
+        bool increaseErrorCountAndValidate();
+
+        /** Decreases the error count by 1 */
+        void decreaseErrorCount();
+
+        /** Write an request and validates the response
+         *
+         *  The responses are validated and increase error count if they
+         *  are invalid, upon reaching the threshold it throws.
+         *
+         *  @param buffer [uint8_t]
+         *  @param bufsize [int] the size of the buffer
+         *  @param frame [Frame] the frame used to write the message
+         *  @param function [int] the function of the action we want to execute
+         *  @param expected_length [uint8_t] the expected length of the response data
+         */
         void writePacketAndReadReply(uint8_t const* buffer,
             int bufsize,
             Frame& frame,
-            int function);
+            int function,
+            uint8_t expected_length);
 
     public:
-        RTUMaster();
+        explicit RTUMaster(uint8_t error_threshold = 1, uint8_t error_increment = 1);
 
         /** Change the expected interframe delay
          *
@@ -77,6 +111,22 @@ namespace modbus {
          */
         base::Time getInterframeDelay() const;
 
+        /** Set the increment added to the error count by each error that
+         *  is retryable
+         *
+         *  @param [uint8_t] increment value
+         */
+        void setErrorIncrement(uint8_t increment);
+
+        /** Set the maximum value before throwing
+         *
+         *  @param [uint8_t] threshold value
+         */
+        void setErrorThreshold(uint8_t threshold);
+
+        /** Get the RTU Statistics */
+        RTUStatistics getRTUStats() const;
+
         /** Wait for one frame on the bus and read it
          */
         Frame readFrame();
@@ -92,11 +142,6 @@ namespace modbus {
         /** Wait for the reply for the given request
          */
         void readReply(Frame& frame, int function);
-
-        /** Send a request and wait for the slave's reply */
-        Frame const& request(int address,
-            int function,
-            std::vector<uint8_t> const& payload);
 
         /** Send a broadcast
          *
