@@ -34,6 +34,9 @@ namespace modbus {
          */
         uint32_t total_unexpected_reply_error_count = 0;
 
+        /** Total amount of replies where the frame received was too small */
+        uint32_t total_too_small_error_count = 0;
+
         /** Total amount of messages that passed validation */
         uint64_t total_success_count = 0;
 

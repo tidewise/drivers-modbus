@@ -143,6 +143,12 @@ void RTUMaster::writePacketAndReadReply(uint8_t const* buffer,
                 throw;
             }
         }
+        catch (modbus::RTU::TooSmall const&) {
+            m_statistics.total_too_small_error_count++;
+            if (increaseErrorCountAndValidate()) {
+                throw;
+            }
+        }
     } while (true);
 }
 
